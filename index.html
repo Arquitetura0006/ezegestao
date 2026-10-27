@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#FFFFFF">
 <meta name="robots" content="noindex">
+<link rel="preload" as="image" href="capa.webp" media="(min-width:861px)">
+<link rel="preload" as="image" href="capa-m.webp" media="(max-width:860px)">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>EZE Gestão Protótipo</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -345,6 +347,31 @@ body.cover main.wrap{max-width:none!important;padding:0!important;margin:0!impor
  .capa-note{display:none}
  .capa-side{padding-block:32px 48px;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px));justify-content:flex-start}
 }
+
+.capa-hero{background:#CFCFCC}
+.capa-img{position:absolute;inset:-12px;display:block;transform:scale(1.04);transition:transform .9s cubic-bezier(.2,.7,.2,1)}
+.capa-img img{width:100%;height:100%;object-fit:cover;object-position:62% 50%;display:block;filter:grayscale(1) contrast(1.06) brightness(1.04);transition:filter 1.2s}
+.capa-hero.noite .capa-img img{filter:grayscale(1) contrast(1.1) brightness(.55)}
+.capa-scrim{position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.55) 0%,rgba(255,255,255,0) 38%),linear-gradient(0deg,rgba(0,0,0,.28) 0%,rgba(0,0,0,0) 26%);pointer-events:none}
+.capa-hero.noite .capa-scrim{background:linear-gradient(180deg,rgba(0,0,0,.35) 0%,rgba(0,0,0,0) 40%),linear-gradient(0deg,rgba(0,0,0,.4) 0%,rgba(0,0,0,0) 30%)}
+.capa-chip{background:rgba(255,255,255,.78);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:#16181D;border-radius:999px;padding:7px 14px;font-size:12.5px;font-weight:600}
+.capa-cap .capa-note{display:inline-block;font-weight:500;opacity:1}
+@media (prefers-reduced-motion:no-preference){.capa-img img{animation:kb 34s ease-in-out infinite alternate;transform-origin:62% 40%}}
+@keyframes kb{from{transform:scale(1)}to{transform:scale(1.09)}}
+@media (max-width:860px){.capa-cap .capa-note{display:none}}
+
+@media (min-width:861px){
+ .capa{display:block;position:relative;min-height:100vh;overflow:hidden}
+ .capa-hero{position:absolute;inset:0;min-height:100vh}
+ .capa-img img{object-position:42% 55%}
+ .capa-scrim{background:linear-gradient(105deg,rgba(255,255,255,.62) 0%,rgba(255,255,255,.18) 34%,rgba(255,255,255,0) 52%),linear-gradient(0deg,rgba(0,0,0,.22) 0%,rgba(0,0,0,0) 22%)}
+ .capa-side{position:absolute;right:max(48px,env(safe-area-inset-right,0px));top:50%;transform:translateY(-50%);width:420px;max-height:calc(100vh - 64px);overflow:auto;border-radius:22px;box-shadow:0 30px 70px rgba(16,24,40,.22);padding:36px 36px 30px;gap:20px;background:rgba(255,255,255,.96)}
+ .capa-side>*{max-width:none}
+ .capa-cap{right:auto}
+ .capa-title{font-size:clamp(56px,6.4vw,104px);top:96px}
+}
+@media (max-width:860px){.capa-img img{object-position:46% 50%}}
+@media (max-width:860px){.capa-title{display:none}.capa-hero{min-height:46vh}}
 </style>
 </head>
 <body>
@@ -846,13 +873,14 @@ function vEntrada(){
  const eq=entTab==='equipe';
  return `<div class="capa">
  <section class="capa-hero" aria-label="Capa">
-  ${capaSVG()}
+  <picture class="capa-img"><source media="(max-width:860px)" srcset="capa-m.webp"><img src="capa.webp" alt="Render de edifício residencial projetado pela EZE Arquitetura" fetchpriority="high" decoding="async"></picture>
+  <div class="capa-scrim" aria-hidden="true"></div>
   <div class="capa-head"><img src="${LOGO_MARK}" alt="EZE" class="capa-logo"><p class="capa-kicker">Arquitetura e Gestão</p></div>
   <h1 class="capa-title">Escritório<br>virtual</h1>
-  <div class="capa-cap"><span>Bombinhas, SC · <span id="capaHora">--:--</span><br><span class="capa-note">A luz desta capa acompanha o horário do escritório.</span></span><button type="button" class="capa-btn" data-act="capaDia">Ver o dia passar</button></div>
+  <div class="capa-cap"><span class="capa-chip">Bombinhas, SC · <span id="capaHora">--:--</span></span><span class="capa-chip capa-note">Projeto EZE Arquitetura</span></div>
  </section>
  <section class="capa-side">
-  <div><p class="mono" style="margin:0 0 10px">Bem-vindo</p><h2 class="capa-h2">Entre no escritório</h2><p class="note" style="margin:6px 0 0;font-size:14px">Partners entram para trabalhar. Clientes são recebidos na recepção.</p></div>
+  <div><p class="mono" style="margin:0 0 10px">Escritório virtual EZE</p><h2 class="capa-h2">Entre no escritório</h2><p class="note" style="margin:6px 0 0;font-size:14px">Partners entram para trabalhar. Clientes são recebidos na recepção.</p></div>
   <div class="tabs" role="tablist" aria-label="Tipo de acesso"><button type="button" role="tab" aria-selected="${eq}" class="${eq?'on':''}" data-act="entTab" data-v="equipe">Partners e equipe</button><button type="button" role="tab" aria-selected="${!eq}" class="${eq?'':'on'}" data-act="entTab" data-v="cliente">Sou cliente</button></div>
   ${eq?`<form id="flogin" class="capa-form">
    <div><label class="l" for="lmail">E-mail</label><input id="lmail" type="text" autocomplete="username" placeholder="voce@exemplo.com"></div>
@@ -885,8 +913,11 @@ function capaFrame(ts){
  const hh=Math.floor(h)%24,mm=Math.floor((h-Math.floor(h))*60),lb=document.getElementById('capaHora');if(lb)lb.textContent=String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');
  capaRAF=requestAnimationFrame(capaFrame);
 }
-function startCapa(){if(!capaRAF&&document.getElementById('capa'))capaRAF=requestAnimationFrame(capaFrame)}
-document.addEventListener('pointermove',e=>{if(!capaRAF)return;capaMX=e.clientX/window.innerWidth-.5;capaMY=e.clientY/window.innerHeight-.5},{passive:true});
+let capaTimer=null;
+function startCapa(){const hero=document.querySelector('.capa-hero');if(!hero){if(capaTimer){clearInterval(capaTimer);capaTimer=null}capaRAF=null;return}
+ const tick=()=>{const h=horaBomb(),hh=Math.floor(h)%24,mm=Math.floor((h-Math.floor(h))*60);const lb=document.getElementById('capaHora');if(lb)lb.textContent=String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');const el=document.querySelector('.capa-hero');if(el)el.classList.toggle('noite',h<5.8||h>18.7)};
+ tick();capaRAF=1;if(!capaTimer)capaTimer=setInterval(tick,30000)}
+document.addEventListener('pointermove',e=>{const p=document.querySelector('.capa-img');if(!p||matchMedia('(prefers-reduced-motion: reduce)').matches)return;const x=e.clientX/window.innerWidth-.5,y=e.clientY/window.innerHeight-.5;p.style.transform=`translate(${(x*-14).toFixed(1)}px,${(y*-10).toFixed(1)}px) scale(1.04)`},{passive:true});
 function vVisita(){
  const v=S.visitas.find(x=>x.id==ses('vis'));
  const top=`<div class="row" style="justify-content:space-between;align-items:center;margin-bottom:32px"><img src="${LOGO_MARK}" alt="EZE" style="height:22px;width:auto"><button class="btn small" type="button" data-act="vSair">Sair</button></div>`;
