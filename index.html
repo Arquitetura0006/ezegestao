@@ -87,7 +87,7 @@ main{padding-block:36px 96px}
 .opt.no{border:2px dashed var(--fg)}
 .chk{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--line);cursor:pointer}
 .chk input{width:20px;height:20px;margin:2px 0 0;accent-color:var(--fg);flex:none}
-textarea,input[type=text],input[type=file],select.f{width:100%;border:1px solid var(--fg);background:var(--bg);padding:10px 12px}
+textarea,input[type=text],input[type=password],input[type=file],select.f{width:100%;border:1px solid var(--fg);background:var(--bg);padding:10px 12px}
 label.l{display:block;font-size:14px;font-weight:500;margin-bottom:6px}
 .tbl{overflow-x:auto}
 table{border-collapse:collapse;width:100%;min-width:720px;font-size:15px}
@@ -188,7 +188,7 @@ body{background:var(--canvas);font-size:15px}
 .btn.dark:hover{background:#2B2E35}
 .btn.small{min-height:34px;border-radius:9px;font-size:13px;padding:0 12px}
 .btn[disabled]{border:1px dashed var(--ctl);background:var(--soft);color:var(--faint)}
-textarea,input[type=text],input[type=file],select.f{border:1px solid var(--ctl);border-radius:10px;background:var(--bg)}
+textarea,input[type=text],input[type=password],input[type=file],select.f{border:1px solid var(--ctl);border-radius:10px;background:var(--bg)}
 textarea:focus,input:focus,select:focus{border-color:var(--fg);outline:none}
 .search{border:1px solid var(--ctl);border-radius:10px;background:var(--bg);overflow:hidden}
 .search button{border-left:0}
@@ -283,6 +283,24 @@ header.top{background:var(--bg);border-bottom:1px solid var(--line)}
 .amb.jardim .jt{position:relative;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#6E7469;background:rgba(241,243,239,.85);padding:2px 10px;border-radius:999px;margin:0}
 .amb h3{overflow-wrap:anywhere;hyphens:auto}
 @media (max-width:640px){.amb h3{font-size:11px}.planta{grid-template-rows:minmax(52px,auto) repeat(3,minmax(52px,auto)) minmax(84px,auto) minmax(84px,auto);gap:4px;padding:4px}.amb{padding:6px}.seat .av{width:28px;height:28px}.amb .btn.small{min-height:26px;padding:0 8px;font-size:11px}}
+
+body.bare header.top,body.bare .tabbar{display:none!important}
+body.bare main.wrap{margin-left:auto!important;margin-right:auto;max-width:1040px;padding-block:48px 64px}
+.entrada{max-width:960px}
+.visita{max-width:900px}
+.call{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:12px}
+.call.one{max-width:420px}
+.tile{background:#22252B;border-radius:18px;min-height:250px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;text-align:center}
+.tile .av{border-color:#22252B;box-shadow:0 0 0 1px #3A3D44}
+.callbar{margin-top:14px;gap:8px}
+.linkbtn{border:0;background:none;padding:0;text-decoration:underline;cursor:pointer;color:inherit;font:inherit}
+.av.vis{box-shadow:0 0 0 1.5px var(--fg)}
+@media (prefers-reduced-motion:no-preference){
+ .tile.ring .av{animation:ringp 1.4s ease-out infinite}
+ .ringbtn{animation:ringb 1.2s ease-in-out infinite}
+}
+@keyframes ringp{0%{box-shadow:0 0 0 0 rgba(255,255,255,.45)}100%{box-shadow:0 0 0 22px rgba(255,255,255,0)}}
+@keyframes ringb{50%{transform:scale(1.02)}}
 </style>
 </head>
 <body>
@@ -364,7 +382,8 @@ function fresh(){return{
  base:{leg:[['Bombinhas','Plano diretor e código de obras','Regras extraídas'],['Porto Belo','Plano diretor','Regras extraídas'],['Itapema','Plano diretor','Pendente']],refs:3,exig:0}
 };}
 let S;try{S=JSON.parse(localStorage.getItem(KEY))||fresh()}catch(e){S=fresh()}
-function fixSala(){(S.pjs||[]).forEach(p=>{if(p.sala==='cafe')p.sala='aprovacao'})}
+function fixSala(){(S.pjs||[]).forEach(p=>{if(p.sala==='cafe')p.sala='aprovacao'});if(!S.pjs.find(p=>p.id==='lia'))S.pjs.push({id:'lia',nome:'Lia',ini:'LI',cidade:'Bombinhas',st:'disp',sala:'recepcao',hab:{},n:{},ativos:0,papel:'Recepção'});if(!S.visitas)S.visitas=[]}
+const MEM={};const ses=(k,v)=>{try{if(v===undefined)return sessionStorage.getItem('ezeg-'+k);if(v===null)sessionStorage.removeItem('ezeg-'+k);else sessionStorage.setItem('ezeg-'+k,String(v))}catch(e){if(v===undefined)return MEM[k]??null;if(v===null)delete MEM[k];else MEM[k]=String(v)}};
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let erro='';let timer=null;
@@ -432,7 +451,7 @@ function renderTop(){
   <label class="btn small" for="foto" style="align-self:flex-start">Trocar foto<input id="foto" type="file" accept="image/*" style="position:absolute;width:1px;height:1px;opacity:0"></label>
   <div class="role" role="group" aria-label="Ver como"><button type="button" data-act="role" data-v="colab" class="${adm?'':'on'}">Ver como Partner</button><button type="button" data-act="role" data-v="admin" class="${adm?'on':''}">Ver como Eze</button></div>
   <form class="search" data-busca="1" role="search"><input type="search" aria-label="Buscar" placeholder="Buscar aulas, manual…" value="${esc(S.busca)}"><button type="submit" aria-label="Buscar">${ICON.search}</button></form>
-  <nav aria-label="Conta">${adm?'':'<a class="dl" href="#perfil"><span>Meu perfil</span></a>'}<a class="dl" href="#mural"><span>Mural</span></a><a class="dl" href="https://app.desker.com.br" target="_blank" rel="noopener"><span>Desker</span>${EXT}</a></nav></div>`:''}`;
+  <nav aria-label="Conta"><a class="dl" href="#entrar" data-act="logout"><span>Sair da conta</span></a>${adm?'':'<a class="dl" href="#perfil"><span>Meu perfil</span></a>'}<a class="dl" href="#mural"><span>Mural</span></a><a class="dl" href="https://app.desker.com.br" target="_blank" rel="noopener"><span>Desker</span>${EXT}</a></nav></div>`:''}`;
  document.getElementById('tabbar').innerHTML=G.map(g=>`<a href="#${g.subs[0][0]}" class="${cg===g?'on':''}">${ti(g.id)}<span>${g.t}${badge(g)?' ('+badge(g)+')':''}</span></a>`).join('');
 }
 function renderTopV2(){
@@ -476,7 +495,7 @@ const head=(eyebrow,title,lead)=>`<p class="mono" style="margin:0 0 16px">${eyeb
 const itemRow=(t,s,href,cta)=>`<div style="display:flex;flex-wrap:wrap;gap:8px 24px;align-items:center;padding:18px 0"><div style="flex:1 1 300px;min-width:0"><p style="margin:0;font-weight:500;font-size:18px">${t}</p><p class="note" style="margin:2px 0 0">${s}</p></div><a class="btn small" href="${href}">${cta}</a></div>`;
 
 function vInicio(){
- const adm=S.role==='admin';const e=S.entrega;const pend=[];
+ const adm=S.role==='admin';const e=S.entrega;const pend=[];S.visitas.filter(x=>x.st==='chamando'||x.st==='aguardando').forEach(x=>pend.push(itemRow(x.st==='chamando'?'Cliente chamando na recepção':'Cliente aguardando na recepção',esc(x.nome)+' · '+esc(x.assunto||'Visita'),'#sala','Ir à recepção')));
  const naSala=S.pjs.filter(p=>p.id!==(adm?'eze':'eu'));
  if(adm){
   if(e.st==='enviada')pend.push(itemRow('Entrega para avaliar','Residência Costa — Criação · pré-revisão IA '+e.score+'%','#avaliar','Avaliar'));
@@ -514,12 +533,13 @@ function vSala(){
  <div class="layout-sala">
   <div class="main"><div class="planta-scroll"><div class="planta" role="list" lang="pt-BR">${AMB.map(a=>{if(a.hub)return hubTile(a);if(a.jardim)return `<div class="amb jardim" style="${a.g}" role="listitem" aria-label="Jardim">${furn(a.id)}<h3 class="jt">Jardim</h3></div>`;const ps=S.pjs.filter(p=>p.sala===a.id);return `<div class="amb ${a.proj?'proj':''} ${a.jardim?'jardim':''} ${me.sala===a.id?'aqui':''}" style="${a.g}" role="listitem">${furn(a.id)}
    <div>${a.proj?'<span class="mono tag" style="font-size:10px">Sala de projeto</span>':''}<h3 ${a.proj?'class="tag"':''} style="margin-top:4px">${a.t}</h3>${a.jardim?'<p class="note-j">Pausa e conversa livre</p>':''}${a.id==='reuniao'?S.reunioes.map(r=>`<span class="pill inv" style="margin-top:6px;white-space:normal">${PROJ.find(p=>p.id===r.proj).t}</span>`).join(''):''}</div>
-   <div class="avs seats">${ps.map(p=>`<span class="seat"><button type="button" class="av ${p.id===me.id?'eu':''}" data-act="pessoa" data-id="${p.id}" aria-label="${p.nome}, ${STN[p.st]}, ${p.cidade}">${face(p)}<span class="st st-${p.st}"></span></button><span class="nm">${p.id===me.id?'Você':p.id==='eu'?'Partner':p.nome}</span></span>`).join('')}</div>
+   <div class="avs seats">${ps.map(p=>`<span class="seat"><button type="button" class="av ${p.id===me.id?'eu':''}" data-act="pessoa" data-id="${p.id}" aria-label="${p.nome}, ${STN[p.st]}, ${p.cidade}">${face(p)}<span class="st st-${p.st}"></span></button><span class="nm">${p.id===me.id?'Você':p.id==='eu'?'Partner':p.nome}</span></span>`).join('')}${S.visitas.filter(x=>(x.st==='reuniao'&&x.sala===a.id)||(['aguardando','chamando','atendido'].includes(x.st)&&a.id==='recepcao')).map(x=>`<span class="seat"><span class="av vis" title="Cliente">${faceVis(x.nome)}</span><span class="nm">${esc(x.nome.split(' ')[0])}</span></span>`).join('')}</div>
    ${me.sala===a.id?'<span class="mono" style="font-size:11px;color:var(--fg)">Você está aqui</span>':`<button type="button" class="btn small" data-act="entrar" data-id="${a.id}" style="align-self:flex-start">Entrar</button>`}
   </div>`}).join('')}</div></div>
   <div class="row note" style="gap:18px;margin-top:12px"><span style="display:flex;gap:6px;align-items:center"><span class="av" style="width:14px;height:14px;border:0;cursor:default"><span class="st st-disp" style="position:static"></span></span>Disponível</span><span style="display:flex;gap:6px;align-items:center"><span class="st st-foco" style="display:inline-block;width:12px;height:12px;border-radius:50%"></span>Focado, só recados</span><span style="display:flex;gap:6px;align-items:center"><span class="st st-reun" style="display:inline-block;width:12px;height:12px;border-radius:50%"></span>Em reunião</span></div>
   <p class="note">Presença voluntária. O sistema não registra horário nem tempo na sala.</p></div>
   <aside>
+   ${recepCard()}
    <div class="box"><p class="mono" style="margin:0 0 8px">Você está em</p><p class="h-m" style="margin:0 0 12px">${amb.t}</p>
     ${S.chamada?`<p style="margin:0 0 10px">Áudio ligado com ${junto.length?junto.map(p=>p.nome).join(', '):'ninguém ainda'}.</p><div class="row" style="gap:8px"><button class="btn small" type="button" data-act="mudo">${S.mudo?'Ativar microfone':'Silenciar'}</button><button class="btn small" type="button" data-act="tela">Compartilhar tela</button><button class="btn small dark" type="button" data-act="sair">Sair do áudio</button></div><p class="note">Chamada simulada. No sistema real, áudio e vídeo rodam dentro da sala.</p>`
     :`<p style="margin:0 0 12px">${junto.length?'Com '+junto.map(p=>p.nome).join(', '):'Ninguém mais neste ambiente.'}</p><button class="btn dark" type="button" data-act="audio">Ligar áudio do ambiente</button>`}
@@ -646,7 +666,7 @@ function vAvaliar(){
 
 function vContratar(){
  const t=S.ctab;let body='';
- if(t==='talentos')body=`<div class="tbl"><table><thead><tr><th>Partner</th><th>Cidade</th>${Object.values(HABS).map(h=>`<th>${h}</th>`).join('')}<th>Contratos ativos</th></tr></thead><tbody>${S.pjs.filter(p=>p.id!=='eze').map(p=>`<tr><td style="font-weight:500">${p.nome}</td><td>${p.cidade} · ${hora(p.cidade)}</td>${Object.keys(HABS).map(k=>{const x=p.hab[k];const cred=x!=null||(p.id==='eu'&&k==='aprovacao'&&credAprov());return `<td>${cred&&x!=null?`<b style="font-size:18px">${f1(x)}</b> <span class="pill">${nivel(x)}</span><br><span class="note">${p.n[k]} entregas</span>`:cred?'<span class="pill">Credenciado</span><br><span class="note">sem entregas</span>':'<span class="note">—</span>'}</td>`}).join('')}<td>${p.ativos}</td></tr>`).join('')}</tbody></table></div><p class="note">Níveis: N1 abaixo de 3,5 · N2 de 3,5 a 4,2 · N3 a partir de 4,3. Dados de exemplo.</p>`;
+ if(t==='talentos')body=`<div class="tbl"><table><thead><tr><th>Partner</th><th>Cidade</th>${Object.values(HABS).map(h=>`<th>${h}</th>`).join('')}<th>Contratos ativos</th></tr></thead><tbody>${S.pjs.filter(p=>p.id!=='eze'&&!p.papel).map(p=>`<tr><td style="font-weight:500">${p.nome}</td><td>${p.cidade} · ${hora(p.cidade)}</td>${Object.keys(HABS).map(k=>{const x=p.hab[k];const cred=x!=null||(p.id==='eu'&&k==='aprovacao'&&credAprov());return `<td>${cred&&x!=null?`<b style="font-size:18px">${f1(x)}</b> <span class="pill">${nivel(x)}</span><br><span class="note">${p.n[k]} entregas</span>`:cred?'<span class="pill">Credenciado</span><br><span class="note">sem entregas</span>':'<span class="note">—</span>'}</td>`}).join('')}<td>${p.ativos}</td></tr>`).join('')}</tbody></table></div><p class="note">Níveis: N1 abaixo de 3,5 · N2 de 3,5 a 4,2 · N3 a partir de 4,3. Dados de exemplo.</p>`;
  if(t==='demandas'){const d=S.dem||{proj:'',hab:'aprovacao',prazo:''};const rank=S.pjs.filter(p=>p.hab[d.hab]!=null).sort((a,b)=>b.hab[d.hab]-a.hab[d.hab]);
   body=`<div class="grid2"><form id="fdem" class="box" style="display:flex;flex-direction:column;gap:14px"><p class="mono" style="margin:0">Nova demanda</p><div><label class="l" for="dproj">Projeto</label><input id="dproj" type="text" value="${esc(d.proj)}" placeholder="Ex.: Residência Silva"></div><div><label class="l" for="dhab">Habilidade</label><select id="dhab" class="f">${Object.entries(HABS).map(([k,v])=>`<option value="${k}" ${d.hab===k?'selected':''}>${v}</option>`).join('')}</select></div><div><label class="l" for="dprazo">Entrega até</label><input id="dprazo" type="text" value="${esc(d.prazo)}" placeholder="Ex.: 30 nov"></div>${erro==='dem'?'<p class="err" role="alert">Informe o nome do projeto.</p>':''}</form>
   <div><p class="mono" style="margin:0 0 8px">Partners credenciados em ${HABS[d.hab]}, por nota</p><div class="list">${rank.map((p,i)=>`<div style="display:flex;gap:16px;align-items:center;padding:14px 0"><span class="mono" style="width:22px">${i+1}</span><span style="flex:1;min-width:0"><b>${p.nome}</b> <span class="pill">${nivel(p.hab[d.hab])}</span><br><span class="note">${p.cidade} · ${p.ativos} contratos ativos · ${p.n[d.hab]} entregas</span></span><span style="font-size:22px;font-weight:700">${f1(p.hab[d.hab])}</span><button class="btn small" type="button" data-act="atribuir" data-id="${p.id}">Convidar</button></div>`).join('')}</div>
@@ -708,7 +728,7 @@ function vBusca(){
 
 function trainCard(){const p=proxima();return `<div class="box" style="flex:1 1 320px;max-width:440px"><p class="mono" style="margin:0 0 12px">Padrões EZE · em curso</p>${!p?'<p class="h-m" style="margin:0">Credenciado em Projeto de aprovação.</p><a class="btn small" href="#credenciamento" style="margin-top:16px">Ver trilhas</a>':`<p class="h-m" style="margin:0 0 4px">Projeto de aprovação</p><p class="note" style="margin:0 0 14px">Aula 0${p.n} · ${p.t}</p><div class="bar" style="margin-bottom:18px"><i style="width:${feitas()*20}%"></i></div><a class="btn dark" href="#aula" data-act="abrir" data-n="${p.n}" style="width:100%;justify-content:space-between">Continuar ${ICON.arrow}</a>`}</div>`}
 
-const LOOK={eu:{h:'short',c:'#3A3D44'},ana:{h:'long',c:'#2B2E35'},bruno:{h:'short',b:1,c:'#4A4D55'},carla:{h:'bun',c:'#2B2E35'},diego:{h:'curly',c:'#23262C'},eze:{h:'short',b:1,c:'#2B2E35',g:1}};
+const LOOK={lia:{h:'long',c:'#4A4D55'},eu:{h:'short',c:'#3A3D44'},ana:{h:'long',c:'#2B2E35'},bruno:{h:'short',b:1,c:'#4A4D55'},carla:{h:'bun',c:'#2B2E35'},diego:{h:'curly',c:'#23262C'},eze:{h:'short',b:1,c:'#2B2E35',g:1}};
 function face(p){
  if(!p)return '';const f=(S.fotos||{})[p.id];if(f)return `<img src="${f}" alt="">`;
  const L=LOOK[p.id]||{h:'short',c:'#3A3D44'};const c=L.c;let hair='';
@@ -730,6 +750,49 @@ function furn(id){
  };
  const d=F[id];if(!d)return '';
  return `<svg class="furn" viewBox="${d[0]}" preserveAspectRatio="${d[1]}" aria-hidden="true"><g fill="none" stroke="#C3C7CD" stroke-width="1.1">${d[2]}</g></svg>`;
+}
+
+function nomeDe(id){const p=S.pjs.find(z=>z.id===id);return !p?'':p.id==='eze'?'Eze':p.id==='eu'?'Partner (teste)':p.nome}
+function faceVis(n){const ini=(n||'?').trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase();return `<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="20" fill="#16181D"/><text x="20" y="24.5" text-anchor="middle" font-size="13" font-weight="600" fill="#fff" font-family="Plus Jakarta Sans, Arial, sans-serif">${esc(ini)}</text></svg>`}
+const tile=(fc,nome,sub,cls='')=>`<div class="tile ${cls}"><span class="av" style="width:104px;height:104px;cursor:default">${fc}</span><p style="margin:14px 0 0;font-weight:600;color:#fff">${nome}</p><p style="margin:2px 0 0;font-size:13px;color:#B9BCC2">${sub}</p></div>`;
+function vEntrada(){return `<div class="entrada">
+ <img src="${LOGO_FULL}" alt="EZE Arquitetura e Gestão" style="height:56px;width:auto;max-width:100%">
+ <h1 class="h-xl" style="margin:36px 0 8px">Escritório virtual</h1>
+ <p class="lead" style="margin:0 0 32px">Partners entram para trabalhar. Clientes são recebidos na nossa recepção.</p>
+ <div class="grid2">
+ <form id="flogin" class="box" style="display:flex;flex-direction:column;gap:14px"><p class="mono" style="margin:0">Partners e equipe</p><h2 class="h-m" style="margin:0">Entrar</h2>
+  <div><label class="l" for="lmail">E-mail</label><input id="lmail" type="text" autocomplete="username" placeholder="voce@exemplo.com"></div>
+  <div><label class="l" for="lsenha">Senha</label><input id="lsenha" type="password" autocomplete="current-password"></div>
+  ${erro==='login'?'<p class="err" role="alert">Informe o seu e-mail.</p>':''}
+  <button class="btn dark" type="submit">Entrar</button>
+  <p class="note" style="margin:0">Protótipo: qualquer e-mail entra. A senha não é verificada nem guardada.</p></form>
+ <form id="fvisita" class="box" style="display:flex;flex-direction:column;gap:14px"><p class="mono" style="margin:0">Clientes</p><h2 class="h-m" style="margin:0">Visitar o escritório</h2>
+  <p class="note" style="margin:0">Entre na recepção e fale com a nossa equipe por chamada, como se estivesse aqui no escritório.</p>
+  <div><label class="l" for="vnome">Seu nome</label><input id="vnome" type="text" autocomplete="name"></div>
+  <div><label class="l" for="vassunto">Empresa ou projeto</label><input id="vassunto" type="text" placeholder="Ex.: Residência Costa"></div>
+  ${erro==='visita'?'<p class="err" role="alert">Informe o seu nome.</p>':''}
+  <button class="btn dark" type="submit">Entrar na recepção</button></form>
+ </div></div>`}
+function vVisita(){
+ const v=S.visitas.find(x=>x.id==ses('vis'));
+ const top=`<div class="row" style="justify-content:space-between;align-items:center;margin-bottom:32px"><img src="${LOGO_MARK}" alt="EZE" style="height:22px;width:auto"><button class="btn small" type="button" data-act="vSair">Sair</button></div>`;
+ if(!v)return `<div class="visita">${top}<p>Visita não encontrada.</p></div>`;
+ const lia=S.pjs.find(p=>p.id==='lia');const voc=tile(faceVis(v.nome),esc(v.nome),'Você');
+ const demo=t=>`<p class="note" style="margin:14px 0 0">Protótipo: ${t}</p>`;
+ let h='',body='';
+ if(v.st==='aguardando'){h='Bem-vindo(a), '+esc(v.nome.split(' ')[0])+'.';body=`<div class="call one">${tile(face(lia),'Lia','Recepção · disponível')}</div><div class="row" style="margin-top:20px"><button class="btn dark" type="button" data-act="vChamar" style="min-height:52px;padding:0 28px">Chamar a recepção</button></div>`}
+ if(v.st==='chamando'){h='Chamando a recepção…';body=`<div class="call one">${tile(face(lia),'Lia','Chamando…','ring')}</div><div class="row" style="margin-top:20px;gap:10px"><button class="btn" type="button" data-act="vCancelar">Cancelar</button><button class="btn" type="button" data-act="vSimular">Simular atendimento</button></div>${demo('abra o mesmo link em outra aba, entre como equipe e atenda pela Sala. Ou use "Simular atendimento".')}`}
+ if(v.st==='atendido'){const at=S.pjs.find(p=>p.id===v.atendente)||lia;h='Em chamada com '+(at.id==='lia'?'a recepção':nomeDe(at.id))+'.';body=`<div class="call">${tile(face(at),at.id==='eze'?'Eze':at.nome==='Você'?'Partner':at.nome,'Recepção')}${voc}</div><div class="row callbar"><button class="btn small" type="button" data-act="tela">Microfone</button><button class="btn small" type="button" data-act="tela">Câmera</button><button class="btn small dark" type="button" data-act="vSair">Encerrar</button></div><p style="margin:16px 0 0">Você será direcionado(a) para a sala de reunião em instantes.</p>${demo('quem atende escolhe a sala e chama a equipe pela Sala. Ou <button class="linkbtn" type="button" data-act="vSimDir">simular o direcionamento</button>.')}`}
+ if(v.st==='reuniao'){const sala=AMB.find(a=>a.id===v.sala);h=sala.t;body=`<p class="lead" style="margin:-8px 0 20px">${v.chamados.length?'Com '+v.chamados.map(nomeDe).join(', '):'Aguardando a equipe entrar'}</p><div class="call">${v.chamados.map(id=>{const p=S.pjs.find(z=>z.id===id);return tile(face(p),nomeDe(id),'EZE Arquitetura e Gestão')}).join('')}${voc}</div><div class="row callbar"><button class="btn small" type="button" data-act="tela">Microfone</button><button class="btn small" type="button" data-act="tela">Câmera</button><button class="btn small" type="button" data-act="tela">Compartilhar tela</button><button class="btn small dark" type="button" data-act="vEncerrar">Sair da reunião</button></div>`}
+ if(v.st==='encerrada'){h='Obrigado pela visita.';body=`<p class="lead">Até a próxima, ${esc(v.nome.split(' ')[0])}.</p><button class="btn dark" type="button" data-act="vSair">Voltar ao início</button>`}
+ return `<div class="visita">${top}<p class="mono" style="margin:0 0 10px">${v.st==='reuniao'?'Sala de reunião':'Recepção'} · EZE Arquitetura e Gestão</p><h1 class="h-l" style="margin:0 0 24px">${h}</h1>${body}</div>`;
+}
+function recepCard(){
+ const at=S.visitas.filter(v=>['aguardando','chamando','atendido'].includes(v.st));
+ if(!at.length)return `<div class="box"><p class="mono" style="margin:0 0 6px">Recepção</p><p style="margin:0">Nenhum cliente na recepção.</p><p class="note" style="margin:6px 0 0">Para testar, saia da conta e entre como cliente em outra aba.</p></div>`;
+ return `<div class="box"><p class="mono" style="margin:0 0 6px">Recepção</p>${at.map(v=>`<div style="padding:12px 0;border-top:1px solid var(--line)"><div style="display:flex;gap:12px;align-items:center"><span class="av vis" style="width:44px;height:44px;cursor:default">${faceVis(v.nome)}</span><div style="flex:1;min-width:0"><b>${esc(v.nome)}</b><br><span class="note">${esc(v.assunto||'Visita')} · ${v.st==='chamando'?'chamando a recepção':v.st==='aguardando'?'aguardando':'em atendimento'}</span></div></div>
+ ${v.st==='chamando'?`<button class="btn dark ringbtn" type="button" data-act="atender" data-id="${v.id}" style="margin-top:12px;width:100%">Atender chamada</button>`:''}
+ ${v.st==='atendido'?`<div style="margin-top:12px;display:flex;flex-direction:column;gap:8px"><label class="l" for="dsala${v.id}" style="margin:0">Levar para</label><select id="dsala${v.id}" class="f">${['reuniao','reuniao2','ceo'].map(id=>`<option value="${id}">${AMB.find(a=>a.id===id).t}</option>`).join('')}</select><p class="l" style="margin:6px 0 0">Chamar para a sala</p>${S.pjs.filter(p=>!p.papel).map(p=>`<label class="chk" style="padding:6px 0"><input type="checkbox" data-cham="${v.id}" value="${p.id}"><span>${nomeDe(p.id)}</span></label>`).join('')}<button class="btn dark" type="button" data-act="direcionar" data-id="${v.id}">Levar e chamar</button></div>`:''}</div>`).join('')}</div>`;
 }
 function visivel(p){return S.role==='admin'||(p.ps.includes('eu')&&(p.id!=='pr1'||S.convite.st==='aceito'))}
 function hubTile(a){const adm=S.role==='admin';const n=PROJ.filter(visivel).length;const r=S.reunioes.filter(x=>visivel(PROJ.find(p=>p.id===x.proj))).length;return `<div class="amb proj" style="${a.g}" role="listitem">${furn(a.id)}<div><h3 class="tag" style="margin-top:4px">Projetos</h3><p class="tag" style="margin:6px 0 0;font-size:13px">${adm?n+' ativos':n+(n===1?' seu':' seus')}</p><p class="tag" style="margin:4px 0 0;font-size:13px">${r} em reunião</p></div><a class="btn small" href="#projetos" data-act="proj" data-id="" style="align-self:flex-start">Abrir</a></div>`}
@@ -758,10 +821,12 @@ function vProjeto(p){
  <h2 class="mono" style="margin:28px 0 8px">Arquivos</h2><div class="list">${['Pasta do projeto','Briefing do cliente','Levantamento topográfico'].map(f=>`<div style="padding:12px 0;display:flex;justify-content:space-between;align-items:center;gap:12px"><span>${f}</span><button class="btn small" type="button" data-act="baixar">Abrir</button></div>`).join('')}</div></section></div>`;
 }
 function render(){
- let v=view();const adm=S.role==='admin';
+ fixSala();let v=view();const adm=S.role==='admin';const sess=ses('s');
+ if(sess==='cliente')v='visita';else if(!sess)v='entrar';
+ document.body.classList.toggle('bare',v==='entrar'||v==='visita');
  if(adm&&['entregas','perfil'].includes(v))v='inicio';if(!adm&&['avaliar','contratar','conteudo'].includes(v))v='inicio';
  renderTop();
- const map={inicio:vInicio,sala:vSala,entregas:vEntregas,perfil:vPerfil,credenciamento:vCred,aula:vAula,avaliar:vAvaliar,contratar:vContratar,conteudo:vConteudo,manual:vManual,mural:vMural,busca:vBusca,projetos:vProjetos};
+ const map={inicio:vInicio,sala:vSala,entregas:vEntregas,perfil:vPerfil,credenciamento:vCred,aula:vAula,avaliar:vAvaliar,contratar:vContratar,conteudo:vConteudo,manual:vManual,mural:vMural,busca:vBusca,projetos:vProjetos,entrar:vEntrada,visita:vVisita};
  const g=groupOf(v);document.getElementById('app').innerHTML=(g&&g.subs.length>1&&v!=='aula'?subnav(g,v):'')+(map[v]||vInicio)();
  erro='';save();
 }
@@ -771,6 +836,16 @@ function recalc(){const R=S.rub;const nota=(R.cri+R.tec+R.pad+R.prazo+R.rev)/5;c
 document.addEventListener('click',ev=>{
  const el=ev.target.closest('[data-act]');if(!el)return;const act=el.dataset.act;const a=S.a[S.aula];const e=S.entrega;
  const me=S.pjs.find(p=>p.id===(S.role==='admin'?'eze':'eu'));
+ if(act==='logout'){ev.preventDefault();ses('s',null);menuOpen=false;render();return}
+ {const vv=S.visitas&&S.visitas.find(x=>x.id==(el.dataset.id||ses('vis')));
+ if(act==='vChamar'&&vv){vv.st='chamando';render();return}
+ if(act==='vCancelar'&&vv){vv.st='aguardando';render();return}
+ if(act==='vSimular'&&vv){vv.st='atendido';vv.atendente='lia';render();return}
+ if(act==='vSimDir'&&vv){vv.st='reuniao';vv.sala='reuniao';vv.chamados=['eze'];render();return}
+ if(act==='vEncerrar'&&vv){vv.st='encerrada';render();return}
+ if(act==='vSair'){if(vv&&vv.st!=='encerrada')vv.st='encerrada';ses('s',null);ses('vis',null);render();return}
+ if(act==='atender'&&vv){const me=S.pjs.find(p=>p.id===(S.role==='admin'?'eze':'eu'));vv.st='atendido';vv.atendente=me.id;me.sala='recepcao';S.chamada=true;render();toast('Você atendeu '+vv.nome);return}
+ if(act==='direcionar'&&vv){const sala=document.getElementById('dsala'+vv.id).value;const ch=[...document.querySelectorAll('[data-cham="'+vv.id+'"]:checked')].map(i=>i.value);vv.st='reuniao';vv.sala=sala;vv.chamados=ch;ch.forEach(id=>{const p=S.pjs.find(z=>z.id===id);if(p){p.sala=sala;p.st='reun'}});render();toast(vv.nome+' foi levado(a) para '+AMB.find(a=>a.id===sala).t+(ch.length?'. Chamados: '+ch.map(id=>nomeDe(id)).join(', '):''));return}}
  if(act==='menu'){menuOpen=!menuOpen;renderTop();if(menuOpen)window.scrollTo(0,0);return}
  if(act==='role'){S.role=el.dataset.v;stopVideo();S.chamada=false;menuOpen=false;render();toast(S.role==='admin'?'Vendo como Eze (administrador)':'Vendo como Partner');return}
  if(act==='trilha'){S.trilha=el.dataset.k;S.rvi=0;S.tab='conteudo';if(S.trilha==='aprovacao')S.aula=(proxima()||{n:1}).n;stopVideo();if(location.hash==='#aula'){ev.preventDefault();render();window.scrollTo(0,0)}return}
@@ -839,6 +914,8 @@ document.addEventListener('input',ev=>{
 });
 document.addEventListener('submit',ev=>{
  ev.preventDefault();const f=ev.target;const e=S.entrega;
+ if(f.id==='flogin'){const m=document.getElementById('lmail').value.trim();if(!m){erro='login';render();return}ses('s','equipe');location.hash='inicio';render();toast('Bem-vindo ao escritório');return}
+ if(f.id==='fvisita'){const n=document.getElementById('vnome').value.trim();if(!n){erro='visita';render();return}const id=Date.now();S.visitas.push({id,nome:n,assunto:document.getElementById('vassunto').value.trim(),st:'aguardando',sala:null,chamados:[]});ses('s','cliente');ses('vis',id);render();return}
  if(f.dataset.busca){S.busca=f.querySelector('input').value;menuOpen=false;go('busca');return}
  if(f.id==='fduv'){const v=document.getElementById('duv').value.trim();if(!v){erro='duv';render();return}S.duv.push({id:Date.now(),aula:S.aula,quem:'Você',txt:v,resp:'',faq:false});render();toast('Dúvida enviada');return}
  if(f.id==='fex'){const inp=document.getElementById('arq');if(!inp.files.length){erro='ex';render();return}S.a[5].ex='enviado';S.a[5].arq=inp.files[0].name;render();toast('Exercício enviado para correção');return}
@@ -850,6 +927,7 @@ document.addEventListener('submit',ev=>{
  if(f.dataset.form==='resp'){const id=+f.dataset.id;const r=document.getElementById('r'+id).value.trim();if(!r){erro='r'+id;render();return}const d=S.duv.find(d=>d.id===id);d.resp=r;d.faq=document.getElementById('f'+id).checked;render();toast('Resposta enviada');return}
 });
 document.addEventListener('click',ev=>{if(ev.target.closest('.drawer a.dl')&&menuOpen){menuOpen=false;setTimeout(renderTop,0)}});
+window.addEventListener('storage',e=>{if(e.key!==KEY||!e.newValue)return;let n;try{n=JSON.parse(e.newValue)}catch(x){return}const antes=(S.visitas||[]).filter(v=>v.st==='chamando').length;S=n;fixSala();const depois=S.visitas.filter(v=>v.st==='chamando').length;render();if(ses('s')==='equipe'&&depois>antes)toast('Cliente chamando na recepção')});
 window.addEventListener('hashchange',()=>{stopVideo();menuOpen=false;render();window.scrollTo(0,0)});
 setInterval(()=>{if(view()==='sala'&&!document.activeElement.matches('select,input,textarea'))render()},60000);
 fixSala();render();
