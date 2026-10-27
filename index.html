@@ -5,8 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#FFFFFF">
 <meta name="robots" content="noindex">
-<link rel="preload" as="image" href="capa.webp" media="(min-width:861px)">
-<link rel="preload" as="image" href="capa-m.webp" media="(max-width:860px)">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>EZE Gestão Protótipo</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -372,6 +370,16 @@ body.cover main.wrap{max-width:none!important;padding:0!important;margin:0!impor
 }
 @media (max-width:860px){.capa-img img{object-position:46% 50%}}
 @media (max-width:860px){.capa-title{display:none}.capa-hero{min-height:46vh}}
+
+.capa-img{overflow:hidden}
+.capa-img img.sl{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 1.6s ease,filter 1.2s}
+.capa-img img.sl.on{opacity:1}
+@media (prefers-reduced-motion:no-preference){.capa-img img.sl{animation:none}.capa-img img.sl.on{animation:kb 18s ease-out both}}
+.capa-right{display:flex;align-items:center;gap:10px}
+.capa-dots{display:flex;gap:6px;background:rgba(255,255,255,.78);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-radius:999px;padding:8px 10px}
+.dot{width:8px;height:8px;border-radius:50%;border:0;padding:0;background:rgba(22,24,29,.25);cursor:pointer;transition:background .3s,width .3s}
+.dot.on{background:#16181D;width:20px;border-radius:4px}
+@media (max-width:860px){.capa-cap{justify-content:space-between}}
 </style>
 </head>
 <body>
@@ -873,11 +881,11 @@ function vEntrada(){
  const eq=entTab==='equipe';
  return `<div class="capa">
  <section class="capa-hero" aria-label="Capa">
-  <picture class="capa-img"><source media="(max-width:860px)" srcset="capa-m.webp"><img src="capa.webp" alt="Render de edifício residencial projetado pela EZE Arquitetura" fetchpriority="high" decoding="async"></picture>
+  <div class="capa-img" id="slides">${slideImg(capaIdx,true)}</div>
   <div class="capa-scrim" aria-hidden="true"></div>
   <div class="capa-head"><img src="${LOGO_MARK}" alt="EZE" class="capa-logo"><p class="capa-kicker">Arquitetura e Gestão</p></div>
   <h1 class="capa-title">Escritório<br>virtual</h1>
-  <div class="capa-cap"><span class="capa-chip">Bombinhas, SC · <span id="capaHora">--:--</span></span><span class="capa-chip capa-note">Projeto EZE Arquitetura</span></div>
+  <div class="capa-cap"><span class="capa-chip">Bombinhas, SC · <span id="capaHora">--:--</span></span><span class="capa-right"><span class="capa-chip capa-note">Projeto EZE Arquitetura</span><span class="capa-dots" role="group" aria-label="Imagens da capa">${SLIDES.map((x,i)=>`<button type="button" class="dot ${i===capaIdx?'on':''}" data-act="slide" data-i="${i}" aria-label="Imagem ${i+1}"></button>`).join('')}</span></span></div>
  </section>
  <section class="capa-side">
   <div><p class="mono" style="margin:0 0 10px">Escritório virtual EZE</p><h2 class="capa-h2">Entre no escritório</h2><p class="note" style="margin:6px 0 0;font-size:14px">Partners entram para trabalhar. Clientes são recebidos na recepção.</p></div>
@@ -913,10 +921,18 @@ function capaFrame(ts){
  const hh=Math.floor(h)%24,mm=Math.floor((h-Math.floor(h))*60),lb=document.getElementById('capaHora');if(lb)lb.textContent=String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');
  capaRAF=requestAnimationFrame(capaFrame);
 }
+const SLIDES=[{d:'42% 55%',m:'46% 50%'},{d:'26% 50%',m:'26% 50%'},{d:'38% 50%',m:'62% 50%'},{d:'40% 50%',m:'66% 50%'}];
+let capaIdx=Math.floor(Math.random()*SLIDES.length),slideTimer=null;
+const mobile=()=>matchMedia('(max-width:860px)').matches;
+function slideImg(i,on){const n=i+1;return `<img class="sl ${on?'on':''}" data-i="${i}" src="capa-${n}${mobile()?'-m':''}.webp" srcset="capa-${n}-m.webp 900w, capa-${n}.webp 1600w" sizes="100vw" alt="Render de projeto residencial da EZE Arquitetura" decoding="async" ${on?'fetchpriority="high"':'loading="lazy"'} style="object-position:${mobile()?SLIDES[i].m:SLIDES[i].d}">`}
+function irSlide(i){const box=document.getElementById('slides');if(!box)return;i=(i+SLIDES.length)%SLIDES.length;let im=box.querySelector('img[data-i="'+i+'"]');if(!im){box.insertAdjacentHTML('beforeend',slideImg(i,false));im=box.querySelector('img[data-i="'+i+'"]')}
+ const show=()=>{box.querySelectorAll('img.sl').forEach(x=>x.classList.toggle('on',x===im));document.querySelectorAll('.capa-dots .dot').forEach((d,k)=>d.classList.toggle('on',k===i));capaIdx=i};
+ if(im.complete&&im.naturalWidth)show();else im.addEventListener('load',show,{once:true})}
+function startSlides(){if(slideTimer||!document.getElementById('slides'))return;if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;slideTimer=setInterval(()=>{if(!document.getElementById('slides')){clearInterval(slideTimer);slideTimer=null;return}irSlide(capaIdx+1)},9000);setTimeout(()=>{const b=document.getElementById('slides');if(b&&!b.querySelector('img[data-i="'+((capaIdx+1)%SLIDES.length)+'"]'))b.insertAdjacentHTML('beforeend',slideImg((capaIdx+1)%SLIDES.length,false))},2500)}
 let capaTimer=null;
 function startCapa(){const hero=document.querySelector('.capa-hero');if(!hero){if(capaTimer){clearInterval(capaTimer);capaTimer=null}capaRAF=null;return}
  const tick=()=>{const h=horaBomb(),hh=Math.floor(h)%24,mm=Math.floor((h-Math.floor(h))*60);const lb=document.getElementById('capaHora');if(lb)lb.textContent=String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');const el=document.querySelector('.capa-hero');if(el)el.classList.toggle('noite',h<5.8||h>18.7)};
- tick();capaRAF=1;if(!capaTimer)capaTimer=setInterval(tick,30000)}
+ tick();capaRAF=1;if(!capaTimer)capaTimer=setInterval(tick,30000);startSlides()}
 document.addEventListener('pointermove',e=>{const p=document.querySelector('.capa-img');if(!p||matchMedia('(prefers-reduced-motion: reduce)').matches)return;const x=e.clientX/window.innerWidth-.5,y=e.clientY/window.innerHeight-.5;p.style.transform=`translate(${(x*-14).toFixed(1)}px,${(y*-10).toFixed(1)}px) scale(1.04)`},{passive:true});
 function vVisita(){
  const v=S.visitas.find(x=>x.id==ses('vis'));
@@ -981,6 +997,7 @@ function recalc(){const R=S.rub;const nota=(R.cri+R.tec+R.pad+R.prazo+R.rev)/5;c
 document.addEventListener('click',ev=>{
  const el=ev.target.closest('[data-act]');if(!el)return;const act=el.dataset.act;const a=S.a[S.aula];const e=S.entrega;
  const me=S.pjs.find(p=>p.id===(S.role==='admin'?'eze':'eu'));
+ if(act==='slide'){irSlide(+el.dataset.i);if(slideTimer){clearInterval(slideTimer);slideTimer=null;startSlides()}return}
  if(act==='entTab'){entTab=el.dataset.v;render();return}
  if(act==='capaDia'){if(!matchMedia('(prefers-reduced-motion: reduce)').matches)capaDemo={h0:horaBomb(),t0:null};return}
  if(act==='logout'){ev.preventDefault();ses('s',null);menuOpen=false;render();return}
