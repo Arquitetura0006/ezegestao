@@ -401,7 +401,14 @@ body.cover main.wrap{max-width:none!important;padding:0!important;margin:0!impor
 .fora-top{display:flex;gap:10px;align-items:flex-start}
 .fora-top h3{font-size:14px;margin:2px 0 0}
 .fora-ic{width:46px;height:30px;flex:none;fill:none;stroke:#3A3D44;stroke-width:1.6;stroke-linejoin:round;stroke-linecap:round}
-@media (max-width:640px){.fora-grid{grid-template-columns:1fr}.fora-z{min-height:0}.fora-z .note{font-size:12px}}
+.fora-z{min-height:0!important;padding:8px 10px!important;gap:6px!important}
+.fora-top{align-items:center;gap:8px}
+.fora-top h3{margin:0;font-size:13px;line-height:1.2}
+.fora-ic{width:34px;height:22px}
+.fora-z .seats{gap:6px}.fora-z .seat .av{width:28px;height:28px}.fora-z .seat .nm{font-size:10.5px}
+.fora-btn{min-height:28px!important;padding:0 10px!important;font-size:12px!important;align-self:flex-start}
+.fora-aqui{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+@media (max-width:640px){.fora-grid{gap:5px}.fora-z{padding:7px!important}.fora-top{flex-direction:column;align-items:flex-start;gap:4px}.fora-top h3{font-size:11.5px}.fora-ic{width:30px;height:19px}.fora-aqui{font-size:9.5px}.fora-btn{font-size:11px!important;padding:0 8px!important}}
 @media (max-width:960px){main.wrap{padding-bottom:calc(150px + env(safe-area-inset-bottom,0px))}}
 </style>
 </head>
@@ -644,9 +651,9 @@ function vSala(){
    <div class="avs seats">${ps.map(p=>`<span class="seat"><button type="button" class="av ${p.id===me.id?'eu':''}" data-act="pessoa" data-id="${p.id}" aria-label="${p.nome}, ${STN[p.st]}, ${p.cidade}">${face(p)}<span class="st st-${p.st}"></span></button><span class="nm">${p.id===me.id?'Você':p.id==='eu'?'Partner':p.nome}</span></span>`).join('')}${S.visitas.filter(x=>(x.st==='reuniao'&&x.sala===a.id)||(['aguardando','chamando','atendido'].includes(x.st)&&a.id==='recepcao')).map(x=>`<span class="seat"><span class="av vis" title="Cliente">${faceVis(x.nome)}</span><span class="nm">${esc(x.nome.split(' ')[0])}</span></span>`).join('')}</div>
    ${me.sala===a.id?'<span class="mono" style="font-size:11px;color:var(--fg)">Você está aqui</span>':`<button type="button" class="btn small" data-act="entrar" data-id="${a.id}" style="align-self:flex-start">Entrar</button>`}
   </div>`}).join('')}</div></div>
-  <section class="fora" aria-label="Fora do escritório"><p class="mono" style="margin:0 0 8px">Fora do escritório, mas disponível</p><div class="fora-grid">${FORA.map(z=>{const ps=S.pjs.filter(p=>p.sala===z.id);return `<div class="amb fora-z ${me.sala===z.id?'aqui':''}"><div class="fora-top">${z.svg}<div><h3>${z.t}</h3><p class="note" style="margin:2px 0 0">${z.sub}</p></div></div>
+  <section class="fora" aria-label="Fora do escritório"><p class="mono" style="margin:0 0 8px">Fora do escritório, mas disponível</p><div class="fora-grid">${FORA.map(z=>{const ps=S.pjs.filter(p=>p.sala===z.id);return `<div class="amb fora-z ${me.sala===z.id?'aqui':''}" title="${z.sub}"><div class="fora-top">${z.svg}<h3>${z.t}</h3></div>
    <div class="avs seats">${ps.map(p=>`<span class="seat"><button type="button" class="av ${p.id===me.id?'eu':''}" data-act="pessoa" data-id="${p.id}" aria-label="${p.nome}, ${z.t}">${face(p)}<span class="st st-${p.st}"></span></button><span class="nm">${p.id===me.id?'Você':p.id==='eu'?'Partner':p.nome}</span></span>`).join('')}</div>
-   ${me.sala===z.id?'<span class="mono" style="font-size:11px;color:var(--fg)">Você está aqui</span>':`<button type="button" class="btn small" data-act="entrar" data-id="${z.id}" style="align-self:flex-start">Estou ${z.curto}</button>`}</div>`}).join('')}</div></section>
+   ${me.sala===z.id?'<span class="fora-aqui">Você está aqui</span>':`<button type="button" class="btn small fora-btn" data-act="entrar" data-id="${z.id}">Estou aqui</button>`}</div>`}).join('')}</div></section>
   <div class="row note" style="gap:18px;margin-top:12px"><span style="display:flex;gap:6px;align-items:center"><span class="av" style="width:14px;height:14px;border:0;cursor:default"><span class="st st-disp" style="position:static"></span></span>Disponível</span><span style="display:flex;gap:6px;align-items:center"><span class="st st-foco" style="display:inline-block;width:12px;height:12px;border-radius:50%"></span>Focado, só recados</span><span style="display:flex;gap:6px;align-items:center"><span class="st st-reun" style="display:inline-block;width:12px;height:12px;border-radius:50%"></span>Em reunião</span></div>
   <p class="note">Presença voluntária. O sistema não registra horário nem tempo na sala.</p></div>
   <aside>
