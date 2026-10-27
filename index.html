@@ -380,6 +380,17 @@ body.cover main.wrap{max-width:none!important;padding:0!important;margin:0!impor
 .dot{width:8px;height:8px;border-radius:50%;border:0;padding:0;background:rgba(22,24,29,.25);cursor:pointer;transition:background .3s,width .3s}
 .dot.on{background:#16181D;width:20px;border-radius:4px}
 @media (max-width:860px){.capa-cap{justify-content:space-between}}
+
+.capa-hero.cor .capa-img img.sl{filter:contrast(1.02)}
+.capa-hero.cor.noite .capa-img img.sl{filter:brightness(.55)}
+.cfg-prev{aspect-ratio:16/10;border-radius:10px;overflow:hidden;background:var(--soft)}
+.cfg-prev img{width:100%;height:100%;object-fit:cover;display:block}
+.cfg-foto input[type=range]{width:100%;accent-color:var(--fg)}
+.cfg-add{position:relative;border:1.5px dashed var(--ctl);box-shadow:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:260px;padding:20px}
+.cfg-add:hover{border-color:var(--fg)}
+.cfg-add input{position:absolute;width:1px;height:1px;opacity:0}
+.icon-btns button[disabled]{opacity:.35;cursor:not-allowed}
+.previa-bar{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:40;background:var(--fg);color:#fff;text-decoration:none;font-size:13px;font-weight:600;padding:9px 16px;border-radius:999px;box-shadow:0 8px 24px rgba(0,0,0,.2);white-space:nowrap;max-width:calc(100% - 32px);overflow:hidden;text-overflow:ellipsis}
 </style>
 </head>
 <body>
@@ -530,7 +541,7 @@ function renderTop(){
   <label class="btn small" for="foto" style="align-self:flex-start">Trocar foto<input id="foto" type="file" accept="image/*" style="position:absolute;width:1px;height:1px;opacity:0"></label>
   <div class="role" role="group" aria-label="Ver como"><button type="button" data-act="role" data-v="colab" class="${adm?'':'on'}">Ver como Partner</button><button type="button" data-act="role" data-v="admin" class="${adm?'on':''}">Ver como Eze</button></div>
   <form class="search" data-busca="1" role="search"><input type="search" aria-label="Buscar" placeholder="Buscar aulas, manual…" value="${esc(S.busca)}"><button type="submit" aria-label="Buscar">${ICON.search}</button></form>
-  <nav aria-label="Conta"><a class="dl" href="#entrar" data-act="logout"><span>Sair da conta</span></a>${adm?'':'<a class="dl" href="#perfil"><span>Meu perfil</span></a>'}<a class="dl" href="#mural"><span>Mural</span></a><a class="dl" href="https://app.desker.com.br" target="_blank" rel="noopener"><span>Desker</span>${EXT}</a></nav></div>`:''}`;
+  <nav aria-label="Conta">${adm?'<a class="dl" href="#config"><span>Configurações</span></a>':''}<a class="dl" href="#entrar" data-act="logout"><span>Sair da conta</span></a>${adm?'':'<a class="dl" href="#perfil"><span>Meu perfil</span></a>'}<a class="dl" href="#mural"><span>Mural</span></a><a class="dl" href="https://app.desker.com.br" target="_blank" rel="noopener"><span>Desker</span>${EXT}</a></nav></div>`:''}`;
  document.getElementById('tabbar').innerHTML=G.map(g=>`<a href="#${g.subs[0][0]}" class="${cg===g?'on':''}">${ti(g.id)}<span>${g.t}${badge(g)?' ('+badge(g)+')':''}</span></a>`).join('');
 }
 function renderTopV2(){
@@ -878,14 +889,15 @@ function capaSVG(){
  </g></g>
  </svg>`}
 function vEntrada(){
+ if(capaIdx==null||capaIdx>=SL().length)capaIdx=capaCfg().aleatorio?Math.floor(Math.random()*SL().length):0;
  const eq=entTab==='equipe';
  return `<div class="capa">
- <section class="capa-hero" aria-label="Capa">
+ <section class="capa-hero ${capaCfg().pb?'':'cor'}" aria-label="Capa">
   <div class="capa-img" id="slides">${slideImg(capaIdx,true)}</div>
   <div class="capa-scrim" aria-hidden="true"></div>
   <div class="capa-head"><img src="${LOGO_MARK}" alt="EZE" class="capa-logo"><p class="capa-kicker">Arquitetura e Gestão</p></div>
   <h1 class="capa-title">Escritório<br>virtual</h1>
-  <div class="capa-cap"><span class="capa-chip">Bombinhas, SC · <span id="capaHora">--:--</span></span><span class="capa-right"><span class="capa-chip capa-note">Projeto EZE Arquitetura</span><span class="capa-dots" role="group" aria-label="Imagens da capa">${SLIDES.map((x,i)=>`<button type="button" class="dot ${i===capaIdx?'on':''}" data-act="slide" data-i="${i}" aria-label="Imagem ${i+1}"></button>`).join('')}</span></span></div>
+  <div class="capa-cap"><span class="capa-chip">Bombinhas, SC · <span id="capaHora">--:--</span></span><span class="capa-right"><span class="capa-chip capa-note">Projeto EZE Arquitetura</span><span class="capa-dots" role="group" aria-label="Imagens da capa">${SL().map((x,i)=>`<button type="button" class="dot ${i===capaIdx?'on':''}" data-act="slide" data-i="${i}" aria-label="Imagem ${i+1}"></button>`).join('')}</span></span></div>
  </section>
  <section class="capa-side">
   <div><p class="mono" style="margin:0 0 10px">Escritório virtual EZE</p><h2 class="capa-h2">Entre no escritório</h2><p class="note" style="margin:6px 0 0;font-size:14px">Partners entram para trabalhar. Clientes são recebidos na recepção.</p></div>
@@ -921,14 +933,16 @@ function capaFrame(ts){
  const hh=Math.floor(h)%24,mm=Math.floor((h-Math.floor(h))*60),lb=document.getElementById('capaHora');if(lb)lb.textContent=String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');
  capaRAF=requestAnimationFrame(capaFrame);
 }
-const SLIDES=[{d:'42% 55%',m:'46% 50%'},{d:'26% 50%',m:'26% 50%'},{d:'38% 50%',m:'62% 50%'},{d:'40% 50%',m:'66% 50%'}];
-let capaIdx=Math.floor(Math.random()*SLIDES.length),slideTimer=null;
+function capaCfg(){if(!S.capa)S.capa={fotos:[{n:1,x:42,xm:46},{n:2,x:26,xm:26},{n:3,x:38,xm:62},{n:4,x:40,xm:66}],tempo:9,aleatorio:true,pb:true};return S.capa}
+const SL=()=>capaCfg().fotos;
+let capaIdx=null,slideTimer=null;
 const mobile=()=>matchMedia('(max-width:860px)').matches;
-function slideImg(i,on){const n=i+1;return `<img class="sl ${on?'on':''}" data-i="${i}" src="capa-${n}${mobile()?'-m':''}.webp" srcset="capa-${n}-m.webp 900w, capa-${n}.webp 1600w" sizes="100vw" alt="Render de projeto residencial da EZE Arquitetura" decoding="async" ${on?'fetchpriority="high"':'loading="lazy"'} style="object-position:${mobile()?SLIDES[i].m:SLIDES[i].d}">`}
-function irSlide(i){const box=document.getElementById('slides');if(!box)return;i=(i+SLIDES.length)%SLIDES.length;let im=box.querySelector('img[data-i="'+i+'"]');if(!im){box.insertAdjacentHTML('beforeend',slideImg(i,false));im=box.querySelector('img[data-i="'+i+'"]')}
+function fotoSrc(f,small){return f.url?f.url:`capa-${f.n}${small||mobile()?'-m':''}.webp`}
+function slideImg(i,on){const f=SL()[i];const pos=(mobile()?f.xm:f.x)+'% 50%';const ss=f.url?'':`srcset="capa-${f.n}-m.webp 900w, capa-${f.n}.webp 1600w" sizes="100vw"`;return `<img class="sl ${on?'on':''}" data-i="${i}" src="${fotoSrc(f)}" ${ss} alt="Imagem de projeto da EZE Arquitetura" decoding="async" ${on?'fetchpriority="high"':'loading="lazy"'} style="object-position:${pos}">`}
+function irSlide(i){const box=document.getElementById('slides');if(!box)return;i=(i+SL().length)%SL().length;let im=box.querySelector('img[data-i="'+i+'"]');if(!im){box.insertAdjacentHTML('beforeend',slideImg(i,false));im=box.querySelector('img[data-i="'+i+'"]')}
  const show=()=>{box.querySelectorAll('img.sl').forEach(x=>x.classList.toggle('on',x===im));document.querySelectorAll('.capa-dots .dot').forEach((d,k)=>d.classList.toggle('on',k===i));capaIdx=i};
  if(im.complete&&im.naturalWidth)show();else im.addEventListener('load',show,{once:true})}
-function startSlides(){if(slideTimer||!document.getElementById('slides'))return;if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;slideTimer=setInterval(()=>{if(!document.getElementById('slides')){clearInterval(slideTimer);slideTimer=null;return}irSlide(capaIdx+1)},9000);setTimeout(()=>{const b=document.getElementById('slides');if(b&&!b.querySelector('img[data-i="'+((capaIdx+1)%SLIDES.length)+'"]'))b.insertAdjacentHTML('beforeend',slideImg((capaIdx+1)%SLIDES.length,false))},2500)}
+function startSlides(){if(slideTimer||!document.getElementById('slides')||!capaCfg().tempo||SL().length<2)return;if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;slideTimer=setInterval(()=>{if(!document.getElementById('slides')){clearInterval(slideTimer);slideTimer=null;return}irSlide(capaIdx+1)},(capaCfg().tempo||9)*1000);setTimeout(()=>{const b=document.getElementById('slides');if(b&&!b.querySelector('img[data-i="'+((capaIdx+1)%SL().length)+'"]'))b.insertAdjacentHTML('beforeend',slideImg((capaIdx+1)%SL().length,false))},2500)}
 let capaTimer=null;
 function startCapa(){const hero=document.querySelector('.capa-hero');if(!hero){if(capaTimer){clearInterval(capaTimer);capaTimer=null}capaRAF=null;return}
  const tick=()=>{const h=horaBomb(),hh=Math.floor(h)%24,mm=Math.floor((h-Math.floor(h))*60);const lb=document.getElementById('capaHora');if(lb)lb.textContent=String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');const el=document.querySelector('.capa-hero');if(el)el.classList.toggle('noite',h<5.8||h>18.7)};
@@ -955,6 +969,24 @@ function recepCard(){
  ${v.st==='chamando'?`<button class="btn dark ringbtn" type="button" data-act="atender" data-id="${v.id}" style="margin-top:12px;width:100%">Atender chamada</button>`:''}
  ${v.st==='atendido'?`<div style="margin-top:12px;display:flex;flex-direction:column;gap:8px"><label class="l" for="dsala${v.id}" style="margin:0">Levar para</label><select id="dsala${v.id}" class="f">${['reuniao','reuniao2','ceo'].map(id=>`<option value="${id}">${AMB.find(a=>a.id===id).t}</option>`).join('')}</select><p class="l" style="margin:6px 0 0">Chamar para a sala</p>${S.pjs.filter(p=>!p.papel).map(p=>`<label class="chk" style="padding:6px 0"><input type="checkbox" data-cham="${v.id}" value="${p.id}"><span>${nomeDe(p.id)}</span></label>`).join('')}<button class="btn dark" type="button" data-act="direcionar" data-id="${v.id}">Levar e chamar</button></div>`:''}</div>`).join('')}</div>`;
 }
+
+function vConfig(){const c=capaCfg();const n=c.fotos.length;
+ return head('Configurações','Capa da página de entrada','As imagens que Partners e clientes veem ao abrir o escritório virtual.')+
+ `<div class="grid3">${c.fotos.map((f,i)=>`<div class="box cfg-foto" style="padding:12px;display:flex;flex-direction:column;gap:10px">
+  <div class="cfg-prev"><img src="${f.url||'capa-'+f.n+'-m.webp'}" alt="Imagem ${i+1}" style="object-position:${f.x}% 50%;${c.pb?'filter:grayscale(1)':''}"></div>
+  <div class="row" style="justify-content:space-between;align-items:center;gap:8px"><span class="mono">Imagem ${i+1}</span><span class="icon-btns"><button type="button" data-act="cfgMove" data-i="${i}" data-d="-1" aria-label="Mover para antes" ${i===0?'disabled':''}>←</button><button type="button" data-act="cfgMove" data-i="${i}" data-d="1" aria-label="Mover para depois" ${i===n-1?'disabled':''}>→</button><button type="button" data-act="cfgDel" data-i="${i}" aria-label="Remover imagem" ${n<2?'disabled':''}>×</button></span></div>
+  <label class="l" for="fx${i}" style="margin:0">Enquadramento no computador</label><input type="range" id="fx${i}" min="0" max="100" value="${f.x}" data-fx="${i}">
+  <label class="l" for="fm${i}" style="margin:0">Enquadramento no celular</label><input type="range" id="fm${i}" min="0" max="100" value="${f.xm}" data-fm="${i}">
+ </div>`).join('')}
+ <label class="box cfg-add" for="cfgNova"><span style="font-size:30px;line-height:1">+</span><span style="font-weight:600">Adicionar imagens</span><span class="note" style="text-align:center">JPG, PNG ou WebP, de preferência horizontais. Elas são redimensionadas automaticamente.</span><input id="cfgNova" type="file" accept="image/*" multiple></label></div>
+ <section class="box" style="margin-top:24px;display:flex;flex-direction:column;gap:12px;max-width:640px"><h2 class="h-m" style="margin:0">Exibição</h2>
+  <div><label class="l" for="cfgTempo">Trocar de imagem</label><select id="cfgTempo" class="f" style="max-width:280px">${[6,9,12,20,0].map(t=>`<option value="${t}" ${c.tempo==t?'selected':''}>${t?'A cada '+t+' segundos':'Não trocar, só a cada visita'}</option>`).join('')}</select></div>
+  <label class="chk"><input type="checkbox" id="cfgAleat" ${c.aleatorio?'checked':''}><span>Começar por uma imagem sorteada a cada visita</span></label>
+  <label class="chk" style="border:0"><input type="checkbox" id="cfgPb" ${c.pb?'checked':''}><span>Mostrar em preto e branco</span></label>
+  <div class="row" style="gap:10px"><a class="btn dark" href="#previa">Ver a página de entrada</a><button class="btn" type="button" data-act="cfgReset">Voltar às imagens originais</button></div>
+  <p class="note" style="margin:0">No protótipo, as imagens ficam salvas só neste navegador. No sistema real, ficam no servidor e valem para todos.</p></section>`;
+}
+function cfgSave(){try{localStorage.setItem(KEY,JSON.stringify(S));return true}catch(e){return false}}
 function visivel(p){return S.role==='admin'||(p.ps.includes('eu')&&(p.id!=='pr1'||S.convite.st==='aceito'))}
 function hubTile(a){const adm=S.role==='admin';const n=PROJ.filter(visivel).length;const r=S.reunioes.filter(x=>visivel(PROJ.find(p=>p.id===x.proj))).length;return `<div class="amb proj" style="${a.g}" role="listitem">${furn(a.id)}<div><h3 class="tag" style="margin-top:4px">Projetos</h3><p class="tag" style="margin:6px 0 0;font-size:13px">${adm?n+' ativos':n+(n===1?' seu':' seus')}</p><p class="tag" style="margin:4px 0 0;font-size:13px">${r} em reunião</p></div><a class="btn small" href="#projetos" data-act="proj" data-id="" style="align-self:flex-start">Abrir</a></div>`}
 function vProjetos(){
@@ -984,10 +1016,10 @@ function vProjeto(p){
 function render(){
  fixSala();let v=view();const adm=S.role==='admin';const sess=ses('s');
  if(sess==='cliente')v='visita';else if(!sess)v='entrar';
- document.body.classList.toggle('bare',v==='entrar'||v==='visita');document.body.classList.toggle('cover',v==='entrar');
- if(adm&&['entregas','perfil'].includes(v))v='inicio';if(!adm&&['avaliar','contratar','conteudo'].includes(v))v='inicio';
+ document.body.classList.toggle('bare',v==='entrar'||v==='visita'||v==='previa');document.body.classList.toggle('cover',v==='entrar'||v==='previa');
+ if(adm&&['entregas','perfil'].includes(v))v='inicio';if(!adm&&['avaliar','contratar','conteudo','config','previa'].includes(v))v='inicio';
  renderTop();
- const map={inicio:vInicio,sala:vSala,entregas:vEntregas,perfil:vPerfil,credenciamento:vCred,aula:vAula,avaliar:vAvaliar,contratar:vContratar,conteudo:vConteudo,manual:vManual,mural:vMural,busca:vBusca,projetos:vProjetos,entrar:vEntrada,visita:vVisita};
+ const map={inicio:vInicio,sala:vSala,entregas:vEntregas,perfil:vPerfil,credenciamento:vCred,aula:vAula,avaliar:vAvaliar,contratar:vContratar,conteudo:vConteudo,manual:vManual,mural:vMural,busca:vBusca,projetos:vProjetos,entrar:vEntrada,visita:vVisita,config:vConfig,previa:()=>`<a class="previa-bar" href="#config">Pré-visualização da página de entrada · Voltar às configurações</a>`+vEntrada()};
  const g=groupOf(v);document.getElementById('app').innerHTML=(g&&g.subs.length>1&&v!=='aula'?subnav(g,v):'')+(map[v]||vInicio)();
  erro='';save();startCapa();
 }
@@ -997,6 +1029,9 @@ function recalc(){const R=S.rub;const nota=(R.cri+R.tec+R.pad+R.prazo+R.rev)/5;c
 document.addEventListener('click',ev=>{
  const el=ev.target.closest('[data-act]');if(!el)return;const act=el.dataset.act;const a=S.a[S.aula];const e=S.entrega;
  const me=S.pjs.find(p=>p.id===(S.role==='admin'?'eze':'eu'));
+ if(act==='cfgMove'){const a=SL(),i=+el.dataset.i,j=i+ +el.dataset.d;[a[i],a[j]]=[a[j],a[i]];capaIdx=null;render();return}
+ if(act==='cfgDel'){SL().splice(+el.dataset.i,1);capaIdx=null;render();toast('Imagem removida da capa');return}
+ if(act==='cfgReset'){delete S.capa;capaIdx=null;render();toast('Imagens originais restauradas');return}
  if(act==='slide'){irSlide(+el.dataset.i);if(slideTimer){clearInterval(slideTimer);slideTimer=null;startSlides()}return}
  if(act==='entTab'){entTab=el.dataset.v;render();return}
  if(act==='capaDia'){if(!matchMedia('(prefers-reduced-motion: reduce)').matches)capaDemo={h0:horaBomb(),t0:null};return}
@@ -1062,6 +1097,10 @@ document.addEventListener('change',ev=>{
  if(t.dataset.act==='ck'){S.a[S.aula].ck[+t.dataset.i]=t.checked;render();return}
  if(t.dataset.act==='ap')return;
  if(t.id==='rec'){S.ed.rec=t.checked;save()}
+ if(t.id==='cfgTempo'){capaCfg().tempo=+t.value;if(slideTimer){clearInterval(slideTimer);slideTimer=null}save();toast('Tempo de troca atualizado');return}
+ if(t.id==='cfgAleat'){capaCfg().aleatorio=t.checked;save();return}
+ if(t.id==='cfgPb'){capaCfg().pb=t.checked;render();return}
+ if(t.id==='cfgNova'){const files=[...(t.files||[])];if(!files.length)return;let ok=0;const next=k=>{if(k>=files.length){render();toast(ok?ok+(ok>1?' imagens adicionadas':' imagem adicionada'):'Não foi possível adicionar');return}const rd=new FileReader();rd.onload=()=>{const im=new Image();im.onload=()=>{const w=Math.min(1600,im.width),h=Math.round(im.height*w/im.width);const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(im,0,0,w,h);SL().push({url:c.toDataURL('image/jpeg',.78),x:50,xm:50});if(cfgSave())ok++;else{SL().pop();toast('Sem espaço no protótipo. Remova alguma imagem antes.');render();return}next(k+1)};im.onerror=()=>next(k+1);im.src=rd.result};rd.readAsDataURL(files[k])};next(0);return}
  if(t.id==='pf'){S.pf=t.value;render();return}
  if(t.id==='foto'||t.id==='foto2'){const file=t.files&&t.files[0];if(!file)return;const rd=new FileReader();rd.onload=()=>{const im=new Image();im.onload=()=>{const c=document.createElement('canvas');c.width=c.height=160;const x=c.getContext('2d');const m=Math.min(im.width,im.height);x.drawImage(im,(im.width-m)/2,(im.height-m)/2,m,m,0,0,160,160);S.fotos=S.fotos||{};S.fotos[S.role==='admin'?'eze':'eu']=c.toDataURL('image/jpeg',.82);render();toast('Foto atualizada')};im.src=rd.result};rd.readAsDataURL(file);return}
  if(t.id==='meust'){S.pjs.find(p=>p.id===(S.role==='admin'?'eze':'eu')).st=t.value;render()}
@@ -1069,6 +1108,7 @@ document.addEventListener('change',ev=>{
 });
 document.addEventListener('input',ev=>{
  const t=ev.target;
+ if(t.dataset.fx!==undefined||t.dataset.fm!==undefined){const i=+(t.dataset.fx??t.dataset.fm),f=SL()[i];if(t.dataset.fx!==undefined)f.x=+t.value;else f.xm=+t.value;const im=t.closest('.cfg-foto').querySelector('img');im.style.objectPosition=t.value+'% 50%';save();return}
  if(t.id==='pq'){S.pq=t.value;render();const e=document.getElementById('pq');if(e){e.focus();e.setSelectionRange(e.value.length,e.value.length)}return}
  if(t.id==='nota'){S.notas[S.aula]=t.value;save()}
  if(t.id==='at_t'){S.estr[S.sel.tri].aulas[S.sel.au].t=t.value;save()}
