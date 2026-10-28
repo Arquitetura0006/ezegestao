@@ -10,6 +10,7 @@ type Visita = {
   assunto: string | null;
   status: "aguardando" | "chamando" | "atendido" | "reuniao" | "encerrada";
   ambiente: string | null;
+  link: string | null;
   chamados: { nome: string; foto: string | null }[];
 };
 
@@ -103,6 +104,9 @@ function Recepcao() {
               <h1 className="h-l" style={{ marginBottom: 24 }}>A recepção atendeu.</h1>
               <div className="call"><Tile nome="Recepção" sub="EZE Arquitetura e Gestão" /><Tile nome={v.nome} sub="Você" /></div>
               <p style={{ marginTop: 16 }}>Você será levado(a) para a sala de reunião em instantes.</p>
+              {v.link && (
+                <a className="btn dark" href={v.link} target="_blank" rel="noreferrer" style={{ marginTop: 8 }}>Entrar na chamada de vídeo</a>
+              )}
             </>
           )}
           {v.status === "reuniao" && (
@@ -113,7 +117,12 @@ function Recepcao() {
                 {v.chamados.map((c, i) => <Tile key={i} nome={c.nome} sub="EZE Arquitetura e Gestão" foto={c.foto} />)}
                 <Tile nome={v.nome} sub="Você" />
               </div>
-              <button className="btn dark" type="button" style={{ marginTop: 16 }} onClick={() => acao("sair")}>Sair da reunião</button>
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 16 }}>
+                {v.link && (
+                  <a className="btn dark" href={v.link} target="_blank" rel="noreferrer" style={{ minHeight: 52 }}>Entrar na chamada de vídeo</a>
+                )}
+                <button className="btn" type="button" onClick={() => acao("sair")}>Sair da reunião</button>
+              </div>
             </>
           )}
           {v.status === "encerrada" && (
