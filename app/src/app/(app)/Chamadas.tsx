@@ -84,6 +84,15 @@ export default function Chamadas() {
         const c = m.new as Chamado;
         if (c.status === "cancelado") setRec((r) => (r?.id === c.id ? null : r));
       })
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "mensagens", filter: `escritorio_id=eq.${esc.id}` }, async (m) => {
+        const msg = m.new as { autor_id: string; texto: string };
+        if (msg.autor_id === eu.id || window.location.pathname === "/sala") return;
+        const meu = primeiroNome(eu.nome).toLowerCase();
+        if (!meu || !new RegExp(`@${meu}(?![\\p{L}])`, "iu").test(msg.texto)) return;
+        const { data: p } = await supabase.from("perfis").select("nome").eq("id", msg.autor_id).maybeSingle();
+        tocar();
+        mostrar(`${primeiroNome(p?.nome) || "Alguém"} mencionou você na conversa da sala.`);
+      })
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "visitas", filter: `escritorio_id=eq.${esc.id}` }, (m) => {
         const v = m.new as { nome: string; status: string };
         const o = m.old as { status?: string };
@@ -98,7 +107,7 @@ export default function Chamadas() {
       supabase.removeChannel(canal);
       clearTimeout(timer.current);
     };
-  }, [supabase, eu.id, esc.id, atende]);
+  }, [supabase, eu.id, eu.nome, esc.id, atende]);
 
   async function responder(aceitar: boolean) {
     if (!rec) return;

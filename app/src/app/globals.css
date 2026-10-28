@@ -195,3 +195,30 @@ main.app { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); paddin
 .tabs a { border-radius: 9px; min-height: 36px; padding: 0 14px; display: inline-flex; align-items: center; font-weight: 600; font-size: 14px; color: var(--muted); }
 .tabs a.on { background: var(--bg); color: var(--fg); box-shadow: 0 1px 3px rgba(0,0,0,.1); }
 form.item button.btn { margin-left: auto; }
+
+/* Conversa da equipe (Sala) */
+.sala-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; align-items: start; }
+.conversa { background: var(--bg); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 1px 2px rgba(16,24,40,.05); display: flex; flex-direction: column; height: min(560px, 70vh); min-height: 380px; overflow: hidden; }
+.conversa-h { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 14px 16px; border-bottom: 1px solid var(--line); }
+.conversa-l { flex: 1; overflow-y: auto; padding: 8px 0; overscroll-behavior: contain; }
+.conversa-dia { text-align: center; font-size: 11.5px; font-weight: 600; color: var(--faint); margin: 10px 0 4px; text-transform: uppercase; letter-spacing: .06em; }
+.msg { display: flex; gap: 10px; padding: 6px 14px 2px; position: relative; }
+.msg.junto { padding-top: 0; }
+.msg:hover { background: #fafafb; }
+.msg-av { width: 30px; flex: none; }
+.msg-t { margin: 1px 0 0; font-size: 14.5px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+.msg-x { position: absolute; right: 10px; top: 4px; border: 0; background: var(--bg); border-radius: 6px; width: 24px; height: 24px; cursor: pointer; color: var(--faint); opacity: 0; font-size: 16px; line-height: 1; }
+.msg:hover .msg-x, .msg-x:focus-visible { opacity: 1; }
+@media (hover: none) { .msg-x { opacity: .6; } }
+.mencao { background: #eceef1; border-radius: 5px; padding: 0 3px; font-weight: 600; }
+.mencao.eu { background: var(--fg); color: #fff; }
+.conversa-f { position: relative; display: flex; gap: 8px; align-items: flex-end; padding: 10px 12px; border-top: 1px solid var(--line); }
+.conversa-f textarea { min-height: 42px; max-height: 140px; resize: none; padding: 10px 12px; font-size: 14.5px; }
+.sug { position: absolute; left: 12px; right: 12px; bottom: calc(100% + 4px); display: flex; flex-wrap: wrap; gap: 6px; background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 8px; box-shadow: 0 8px 24px rgba(16,24,40,.12); }
+.badge { margin-left: auto; min-width: 20px; height: 20px; border-radius: 999px; background: var(--fg); color: #fff; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; padding: 0 6px; }
+.tabbar a { position: relative; }
+.tabbar .badge { position: absolute; top: 4px; left: calc(50% + 6px); margin: 0; min-width: 18px; height: 18px; font-size: 10px; }
+@media (min-width: 1240px) {
+  .sala-grid { grid-template-columns: minmax(0, 1fr) 360px; }
+  .conversa { position: sticky; top: 24px; height: calc(100vh - 64px); max-height: 760px; }
+}

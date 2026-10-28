@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
+import { supabaseNavegador } from "@/lib/supabase/client";
 import { Contexto, type Ctx } from "./ctx";
 import { Avatar } from "./ui";
 import Chamadas from "./Chamadas";
@@ -28,6 +30,37 @@ function Ic({ d }: { d: React.ReactNode }) {
 
 export default function Shell({ ctx, children }: { ctx: Ctx; children: React.ReactNode }) {
   const path = usePathname();
+  const supabase = useMemo(() => supabaseNavegador(), []);
+  const [naoLidas, setNaoLidas] = useState(0);
+  const naSala = path === "/sala";
+
+  // Mensagens novas da conversa da equipe enquanto você está em outra tela.
+  useEffect(() => {
+    if (naSala) {
+      setNaoLidas(0);
+      return;
+    }
+    let desde = new Date(Date.now() - 864e5).toISOString();
+    try {
+      desde = localStorage.getItem(`ezeg-lido-${ctx.esc.id}`) || desde;
+    } catch {}
+    supabase
+      .from("mensagens")
+      .select("*", { count: "exact", head: true })
+      .eq("escritorio_id", ctx.esc.id)
+      .neq("autor_id", ctx.eu.id)
+      .gt("created_at", desde)
+      .then(({ count }) => setNaoLidas(count ?? 0));
+    const canal = supabase
+      .channel(`badge-${ctx.esc.id}`)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "mensagens", filter: `escritorio_id=eq.${ctx.esc.id}` }, (m) => {
+        if ((m.new as { autor_id: string }).autor_id !== ctx.eu.id) setNaoLidas((n) => n + 1);
+      })
+      .subscribe();
+    return () => {
+      supabase.removeChannel(canal);
+    };
+  }, [supabase, naSala, ctx.esc.id, ctx.eu.id]);
   const itens = [
     { href: "/inicio", t: "Início", ic: I.inicio },
     { href: "/padroes", t: "Padrões", ic: I.padroes },
@@ -51,6 +84,7 @@ export default function Shell({ ctx, children }: { ctx: Ctx; children: React.Rea
               <Link key={i.href} href={i.href} className={on(i.href) ? "on" : ""} aria-current={on(i.href) ? "page" : undefined}>
                 <Ic d={i.ic} />
                 <span>{i.t}</span>
+                {i.href === "/sala" && naoLidas > 0 && <b className="badge" aria-label={`${naoLidas} mensagens novas`}>{naoLidas > 99 ? "99+" : naoLidas}</b>}
               </Link>
             ))}
           </nav>
@@ -77,6 +111,7 @@ export default function Shell({ ctx, children }: { ctx: Ctx; children: React.Rea
           <Link key={i.href} href={i.href} className={on(i.href) ? "on" : ""} aria-current={on(i.href) ? "page" : undefined}>
             <Ic d={i.ic} />
             <span>{i.t}</span>
+            {i.href === "/sala" && naoLidas > 0 && <b className="badge" aria-label={`${naoLidas} mensagens novas`}>{naoLidas > 99 ? "99+" : naoLidas}</b>}
           </Link>
         ))}
       </nav>

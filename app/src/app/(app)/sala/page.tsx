@@ -6,6 +6,7 @@ import { supabaseNavegador } from "@/lib/supabase/client";
 import { useApp } from "../ctx";
 import { useOnline } from "../Online";
 import { Avatar, Cabeca } from "../ui";
+import Conversa from "./Conversa";
 import { STATUS, type Status, dataHora, erroMsg, primeiroNome } from "@/lib/util";
 
 type Amb = { id: string; chave: string; nome: string; tipo: string; link_chamada: string | null; grade: string | null; ordem: number };
@@ -211,6 +212,8 @@ export default function Sala() {
         </label>
       </Cabeca>
 
+      <div className="sala-grid">
+      <div className="sala-main">
       <div className="planta" role="group" aria-label="Planta do escritório">
         {naPlanta.map((a) => {
           const [r1, c1, r2, c2] = (a.grade || "").split("/").map((s) => s.trim());
@@ -323,6 +326,10 @@ export default function Sala() {
           </div>
         </section>
       )}
+
+      </div>
+      <Conversa gente={gente} />
+      </div>
 
       <section id="recepcao" style={{ marginTop: 32, scrollMarginTop: 24 }}>
         <h2 className="sec-t">Recepção</h2>
