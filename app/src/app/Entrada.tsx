@@ -189,7 +189,9 @@ export default function Entrada({ capa, escritorio }: { capa: Capa; escritorio: 
           </form>
         )}
         {msg && <p className={msg.tipo} role={msg.tipo === "err" ? "alert" : "status"}>{msg.texto}</p>}
-        <p className="note" style={{ margin: "4px 0 0" }}>{capa.nome} · Bombinhas, SC</p>
+        <p className="note" style={{ margin: "4px 0 0" }}>
+          {capa.nome} · Bombinhas, SC · <a href="/privacidade" style={{ color: "inherit" }}>Privacidade</a> · <a href="/termos" style={{ color: "inherit" }}>Termos</a>
+        </p>
       </section>
     </main>
   );
