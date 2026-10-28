@@ -20,6 +20,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     supabase.from("membros").select("papel, escritorios(id,nome,slug)").eq("perfil_id", user.id).eq("ativo", true),
   ]);
 
+  // Foto da conta Google: completa o perfil se ainda estiver vazio.
+  const fotoGoogle = (user.user_metadata?.avatar_url || user.user_metadata?.picture) as string | undefined;
+  if (perfil && !perfil.foto_url && fotoGoogle) {
+    await supabase.from("perfis").update({ foto_url: fotoGoogle }).eq("id", user.id);
+    perfil.foto_url = fotoGoogle;
+  }
+
   type V = { papel: Papel; escritorios: { id: string; nome: string; slug: string } | null };
   const lista = (vinculos ?? []) as unknown as V[];
   const v = lista.find((x) => x.escritorios?.slug === ESCRITORIO) ?? lista[0];
