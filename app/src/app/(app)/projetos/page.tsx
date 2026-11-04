@@ -28,7 +28,7 @@ export default function Projetos() {
   const [etapaAtual, setEtapaAtual] = useState<Record<string, string>>({});
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [busca, setBusca] = useState("");
-  const [filtro, setFiltro] = useState<StatusProj | "todos">("andamento");
+  const [filtro, setFiltro] = useState<StatusProj | "todos" | "arquivados">("andamento");
   const [vista, setVista] = useState<"lista" | "quadro">("lista");
   const [novo, setNovo] = useState<Novo | null>(null);
   const [erro, setErro] = useState("");
@@ -82,10 +82,12 @@ export default function Projetos() {
   const q = busca.trim().toLowerCase();
   const vis = (lista ?? []).filter(
     (p) =>
-      (vista === "quadro" || filtro === "todos" || p.status === filtro) &&
+      (filtro === "arquivados" ? !p.ativo : p.ativo) &&
+      (vista === "quadro" || filtro === "todos" || filtro === "arquivados" || p.status === filtro) &&
       (!q || `${p.codigo ?? ""} ${p.nome} ${p.tipologia ?? ""} ${p.cliente?.nome ?? ""} ${p.cidade ?? ""}`.toLowerCase().includes(q)),
   );
-  const conta = (s: StatusProj) => (lista ?? []).filter((p) => p.status === s).length;
+  const conta = (s: StatusProj) => (lista ?? []).filter((p) => p.ativo && p.status === s).length;
+  const nArq = (lista ?? []).filter((p) => !p.ativo).length;
 
   const Barra = ({ v }: { v: number }) => (
     <span className="prog" aria-label={`${v}% concluído`}><i style={{ width: `${v}%` }} /></span>
@@ -138,9 +140,10 @@ export default function Projetos() {
           <div className="row">
             <input type="text" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar por código, nome, cliente ou cidade" style={{ width: 340, maxWidth: "100%" }} aria-label="Buscar projeto" />
             {vista === "lista" && (
-              <select className="f" style={{ width: "auto" }} value={filtro} onChange={(e) => setFiltro(e.target.value as StatusProj | "todos")} aria-label="Status">
-                <option value="todos">Todos ({lista.length})</option>
+              <select className="f" style={{ width: "auto" }} value={filtro} onChange={(e) => setFiltro(e.target.value as StatusProj | "todos" | "arquivados")} aria-label="Status">
+                <option value="todos">Todos ({lista.length - nArq})</option>
                 {(Object.keys(STATUS_PROJ) as StatusProj[]).map((s) => <option key={s} value={s}>{STATUS_PROJ[s]} ({conta(s)})</option>)}
+                {nArq > 0 && <option value="arquivados">Arquivados ({nArq})</option>}
               </select>
             )}
           </div>
