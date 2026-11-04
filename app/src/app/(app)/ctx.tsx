@@ -5,7 +5,7 @@ import type { Papel } from "@/lib/util";
 
 export type Eu = { id: string; nome: string; email: string; foto: string | null; cidade: string | null };
 export type Esc = { id: string; nome: string; slug: string };
-export type Ctx = { eu: Eu; esc: Esc; papel: Papel; admin: boolean };
+export type Ctx = { eu: Eu; esc: Esc; papel: Papel; admin: boolean; financeiro: boolean };
 
 export const Contexto = createContext<Ctx | null>(null);
 

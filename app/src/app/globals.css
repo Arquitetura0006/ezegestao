@@ -376,3 +376,16 @@ form.item button.btn { margin-left: auto; }
   .doc-ass span { border-top: .75pt solid #000; margin-bottom: 4pt; }
   .doc-ass small { font-size: 9pt; }
 }
+
+/* ===== Financeiro ===== */
+.kpi-b { text-align: left; font: inherit; cursor: pointer; }
+.kpi-b:hover { border-color: #b9bcc2; }
+.kpi-b.on { border-color: var(--fg); box-shadow: inset 0 0 0 1px var(--fg); }
+.fluxo { display: grid; grid-template-columns: repeat(12, 1fr); gap: 8px; height: 180px; align-items: end; background: var(--bg); border: 1px solid var(--line); border-radius: 14px; padding: 14px 14px 8px; }
+.fluxo-c { height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 4px; }
+.fluxo-b { flex: 1; width: 100%; display: flex; align-items: flex-end; justify-content: center; gap: 3px; }
+.fluxo-b i { width: 42%; max-width: 16px; min-height: 1px; border-radius: 3px 3px 0 0; }
+.fluxo-b i.ent { background: var(--fg); }
+.fluxo-b i.sai { background: #b3b6bc; }
+.fluxo-c small { font-size: 11px; color: var(--faint); }
+.tabela tr.dre-t td { background: #f7f7f8; }
