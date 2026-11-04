@@ -7,6 +7,7 @@ import { supabaseNavegador } from "@/lib/supabase/client";
 import { Contexto, type Ctx } from "./ctx";
 import { Avatar } from "./ui";
 import Chamadas from "./Chamadas";
+import Cronometro from "./Cronometro";
 import { OnlineProvider } from "./Online";
 import { MODELO_URL, PAPEL } from "@/lib/util";
 
@@ -18,6 +19,7 @@ const I = {
   equipe: <path d="M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5M16 4.5a3.5 3.5 0 0 1 0 6.5M18 14.8c2 .6 3.2 2.3 3.5 5.2" />,
   config: <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" />,
   tarefas: <path d="M9 6h11M9 12h11M9 18h11M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2" />,
+  horas: <path d="M12 21a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM12 9v4l2.5 2.5M9.5 2.5h5" />,
   cadastros: <path d="M4 6c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3zM4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3" />,
   modelo: <path d="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6" />,
 };
@@ -68,6 +70,7 @@ export default function Shell({ ctx, children }: { ctx: Ctx; children: React.Rea
     { href: "/sala", t: "Sala", ic: I.sala },
     { href: "/projetos", t: "Projetos", ic: I.projetos },
     { href: "/tarefas", t: "Tarefas", ic: I.tarefas },
+    { href: "/horas", t: "Horas", ic: I.horas },
     { href: "/padroes", t: "Padrões", ic: I.padroes },
     { href: "/equipe", t: "Equipe", ic: I.equipe },
   ];
@@ -120,6 +123,7 @@ export default function Shell({ ctx, children }: { ctx: Ctx; children: React.Rea
       </nav>
 
       <Chamadas />
+      <Cronometro />
     </Contexto.Provider>
   );
 }
