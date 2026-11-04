@@ -21,6 +21,7 @@ const I = {
   tarefas: <path d="M9 6h11M9 12h11M9 18h11M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2" />,
   horas: <path d="M12 21a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM12 9v4l2.5 2.5M9.5 2.5h5" />,
   comercial: <path d="M3 7h18v12H3zM8 7V5h8v2M3 12h18" />,
+  financeiro: <path d="M3 6h18v12H3zM3 10h18M7 15h3" />,
   cadastros: <path d="M4 6c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3zM4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3" />,
   modelo: <path d="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6" />,
 };
@@ -76,6 +77,7 @@ export default function Shell({ ctx, children }: { ctx: Ctx; children: React.Rea
     { href: "/equipe", t: "Equipe", ic: I.equipe },
   ];
   if (ctx.admin) itens.splice(4, 0, { href: "/comercial", t: "Comercial", ic: I.comercial });
+  if (ctx.financeiro) itens.splice(ctx.admin ? 5 : 4, 0, { href: "/financeiro", t: "Financeiro", ic: I.financeiro });
   if (ctx.admin) itens.push({ href: "/cadastros", t: "Cadastros", ic: I.cadastros }, { href: "/config", t: "Configurações", ic: I.config });
   const on = (h: string) => path === h || path.startsWith(h + "/");
 
