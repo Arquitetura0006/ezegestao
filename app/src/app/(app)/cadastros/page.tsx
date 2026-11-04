@@ -259,11 +259,35 @@ function Equipe() {
   const { esc } = useApp();
   const supabase = useMemo(() => supabaseNavegador(), []);
   const [lista, setLista] = useState<Mem[]>([]);
+  const [valores, setValores] = useState<Record<string, { valor: number; desde: string }>>({});
   const [erro, setErro] = useState("");
+  const [ok, setOk] = useState("");
   const carregar = useCallback(async () => {
-    const { data } = await supabase.from("membros").select("perfil_id,cargo,horas_semana,perfil:perfis(nome,foto_url)").eq("escritorio_id", esc.id).eq("ativo", true);
+    const [{ data }, { data: vh }] = await Promise.all([
+      supabase.from("membros").select("perfil_id,cargo,horas_semana,perfil:perfis(nome,foto_url)").eq("escritorio_id", esc.id).eq("ativo", true),
+      supabase.from("valores_hora").select("perfil_id,valor,desde").eq("escritorio_id", esc.id).order("desde"),
+    ]);
     setLista(((data as unknown as Mem[]) ?? []).sort((a, b) => (a.perfil?.nome || "").localeCompare(b.perfil?.nome || "")));
+    const v: Record<string, { valor: number; desde: string }> = {};
+    ((vh ?? []) as { perfil_id: string; valor: number; desde: string }[]).forEach((x) => (v[x.perfil_id] = { valor: Number(x.valor), desde: x.desde }));
+    setValores(v);
   }, [supabase, esc.id]);
+
+  async function novoValor(perfil: string, txt: string) {
+    const valor = Number(txt.replace(/\./g, "").replace(",", "."));
+    if (!txt.trim() || isNaN(valor) || valor === valores[perfil]?.valor) return;
+    const desde = new Date().toISOString().slice(0, 10);
+    const { error } = await supabase.from("valores_hora").upsert({ escritorio_id: esc.id, perfil_id: perfil, valor, desde }, { onConflict: "escritorio_id,perfil_id,desde" });
+    if (error) return setErro(erroMsg(error));
+    carregar();
+  }
+
+  async function recalcular() {
+    const ano = new Date().getFullYear();
+    const { data, error } = await supabase.rpc("recalcular_custo", { esc: esc.id, de: "2000-01-01", ate: `${ano}-12-31` });
+    if (error) return setErro(erroMsg(error));
+    setOk(`${data} lançamentos recalculados.`);
+  }
   useEffect(() => {
     carregar();
   }, [carregar]);
@@ -273,8 +297,12 @@ function Equipe() {
   };
   return (
     <>
-      <p className="note" style={{ marginTop: 0 }}>Cargo e horas por semana de cada pessoa. A capacidade alimenta a carga da equipe em Tarefas.</p>
+      <p className="note" style={{ marginTop: 0 }}>
+        Cargo, horas por semana e valor/hora de cada pessoa. A capacidade alimenta a carga da equipe em Tarefas. O valor/hora é visto só por administradores;
+        cada lançamento guarda o valor da data em que foi feito, então mudar o valor vale daqui para frente.
+      </p>
       {erro && <p className="err" role="alert">{erro}</p>}
+      {ok && <p className="ok" role="status">{ok}</p>}
       <div className="lista">
         {lista.map((m) => (
           <div key={m.perfil_id} className="item">
@@ -285,8 +313,18 @@ function Equipe() {
               <input type="number" min={0} max={80} defaultValue={m.horas_semana} style={{ width: 76 }} aria-label="Horas por semana" onBlur={(e) => Number(e.target.value) !== Number(m.horas_semana) && up(m.perfil_id, { horas_semana: Number(e.target.value) || 0 })} />
               <small className="note">h/sem</small>
             </label>
+            <label className="row" style={{ gap: 6, flexWrap: "nowrap" }}>
+              <small className="note">R$</small>
+              <input type="text" inputMode="decimal" key={valores[m.perfil_id]?.valor ?? "v"} defaultValue={valores[m.perfil_id] ? String(valores[m.perfil_id].valor).replace(".", ",") : ""}
+                placeholder="0,00" style={{ width: 90 }} aria-label="Valor por hora" onBlur={(e) => novoValor(m.perfil_id, e.target.value)} />
+              <small className="note">/h</small>
+            </label>
           </div>
         ))}
+      </div>
+      <div className="row" style={{ marginTop: 14 }}>
+        <button className="btn small" type="button" onClick={recalcular}>Recalcular o custo de todas as horas com os valores atuais</button>
+        <small className="note">Use depois de cadastrar valores pela primeira vez.</small>
       </div>
     </>
   );

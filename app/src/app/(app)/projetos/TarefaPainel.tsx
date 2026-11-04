@@ -5,6 +5,7 @@ import { supabaseNavegador } from "@/lib/supabase/client";
 import { useApp } from "../ctx";
 import { Avatar } from "../ui";
 import { erroMsg } from "@/lib/util";
+import { EVENTO, cronAtual, iniciar, parar } from "@/lib/cronometro";
 import {
   CAMPOS_TAREFA, ORDEM_STATUS, PRIORIDADE, STATUS_TAREFA, hoje, horas,
   type Etapa, type Pessoa, type Prioridade, type StatusTarefa, type Tarefa,
@@ -35,6 +36,7 @@ export default function TarefaPainel({
   const [lanc, setLanc] = useState({ data: hoje(), h: "1", nota: "" });
   const [erro, setErro] = useState("");
   const [salvo, setSalvo] = useState(false);
+  const [cronAqui, setCronAqui] = useState(false);
 
   const carregar = useCallback(async () => {
     const [{ data: tt }, { data: ii }, { data: aa }] = await Promise.all([
@@ -51,6 +53,13 @@ export default function TarefaPainel({
     carregar();
     supabase.from("disciplinas").select("id,nome").eq("escritorio_id", esc.id).order("ordem").then(({ data }) => setDiscs((data as Disc[]) ?? []));
   }, [carregar, supabase, esc.id]);
+
+  useEffect(() => {
+    const ver = () => cronAtual(supabase, eu.id).then((c) => setCronAqui(c?.tarefa_id === id));
+    ver();
+    window.addEventListener(EVENTO, ver);
+    return () => window.removeEventListener(EVENTO, ver);
+  }, [supabase, eu.id, id]);
 
   useEffect(() => {
     const k = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -130,6 +139,19 @@ export default function TarefaPainel({
     setLanc({ ...lanc, h: "1", nota: "" });
     carregar();
     onChange();
+  }
+
+  async function cronometro() {
+    if (!t) return;
+    if (cronAqui) {
+      await parar(supabase);
+      carregar();
+      onChange();
+      return;
+    }
+    const error = await iniciar(supabase, esc.id, { projeto_id: t.projeto_id, tarefa_id: id });
+    if (error) return setErro(erroMsg(error));
+    if (t.status === "pendente" || t.status === "backlog") mudarStatus("andamento");
   }
 
   async function tirarApont(a: Apont) {
@@ -249,6 +271,11 @@ export default function TarefaPainel({
 
         <section style={{ marginTop: 26 }}>
           <h3 className="sec-t">Horas <small className="note">{horas(realizado)} de {t.horas_previstas}:00 previstas</small></h3>
+          {pode && (
+            <button className={`btn small${cronAqui ? "" : " dark"}`} type="button" onClick={cronometro} style={{ marginBottom: 10 }}>
+              {cronAqui ? "Parar cronômetro" : "Iniciar cronômetro"}
+            </button>
+          )}
           {pode && (
             <form className="lanc" onSubmit={lancar}>
               <input type="date" value={lanc.data} onChange={(e) => setLanc({ ...lanc, data: e.target.value })} aria-label="Data" />

@@ -31,6 +31,10 @@ export default function ProjetoPg({ params }: { params: { id: string } }) {
   const [tarefas, setTarefas] = useState<Tarefa[]>([]);
   const [minPorTarefa, setMinPorTarefa] = useState<Record<string, number>>({});
   const [minPorPessoa, setMinPorPessoa] = useState<Record<string, number>>({});
+  const [custoPorPessoa, setCustoPorPessoa] = useState<Record<string, number>>({});
+  const [nomePessoa, setNomePessoa] = useState<Record<string, string>>({});
+  const [minSemTarefa, setMinSemTarefa] = useState(0);
+  const [custoTot, setCustoTot] = useState(0);
   const [checks, setChecks] = useState<Record<string, [number, number]>>({});
   const [membros, setMembros] = useState<Pessoa[]>([]);
   const [equipe, setEquipe] = useState<Pessoa[]>([]);
@@ -49,7 +53,7 @@ export default function ProjetoPg({ params }: { params: { id: string } }) {
       supabase.from("projetos").select(CAMPOS_PROJ).eq("id", params.id).maybeSingle(),
       supabase.from("projeto_etapas").select("id,projeto_id,sigla,nome,ordem,peso,inicio,termino").eq("projeto_id", params.id).order("ordem"),
       supabase.from("tarefas").select(CAMPOS_TAREFA).eq("projeto_id", params.id).order("ordem"),
-      supabase.from("apontamentos").select("tarefa_id,perfil_id,minutos").eq("projeto_id", params.id),
+      supabase.rpc("horas_projeto", { proj: params.id }),
       supabase.from("checklist_itens").select("tarefa_id,feito,tarefa:tarefas!inner(projeto_id)").eq("tarefa.projeto_id", params.id),
       supabase.from("projeto_membros").select("perfil:perfis(id,nome,foto_url)").eq("projeto_id", params.id),
     ]);
@@ -58,12 +62,26 @@ export default function ProjetoPg({ params }: { params: { id: string } }) {
     setTarefas((tf as Tarefa[]) ?? []);
     const mt: Record<string, number> = {};
     const mp: Record<string, number> = {};
-    ((ap ?? []) as { tarefa_id: string | null; perfil_id: string; minutos: number }[]).forEach((a) => {
-      if (a.tarefa_id) mt[a.tarefa_id] = (mt[a.tarefa_id] ?? 0) + a.minutos;
-      mp[a.perfil_id] = (mp[a.perfil_id] ?? 0) + a.minutos;
+    const cp: Record<string, number> = {};
+    const np: Record<string, string> = {};
+    let semTarefa = 0;
+    let custo = 0;
+    ((ap ?? []) as { tarefa_id: string | null; perfil_id: string | null; pessoa: string | null; minutos: number; custo: number | null }[]).forEach((a) => {
+      const m = Number(a.minutos);
+      if (a.tarefa_id) mt[a.tarefa_id] = (mt[a.tarefa_id] ?? 0) + m;
+      else semTarefa += m;
+      const k = a.perfil_id ?? `nome:${a.pessoa}`;
+      mp[k] = (mp[k] ?? 0) + m;
+      cp[k] = (cp[k] ?? 0) + Number(a.custo ?? 0);
+      if (a.pessoa) np[k] = a.pessoa;
+      custo += Number(a.custo ?? 0);
     });
     setMinPorTarefa(mt);
     setMinPorPessoa(mp);
+    setCustoPorPessoa(cp);
+    setNomePessoa(np);
+    setMinSemTarefa(semTarefa);
+    setCustoTot(custo);
     const c: Record<string, [number, number]> = {};
     ((ck ?? []) as { tarefa_id: string; feito: boolean }[]).forEach((i) => {
       const x = c[i.tarefa_id] ?? [0, 0];
@@ -98,7 +116,7 @@ export default function ProjetoPg({ params }: { params: { id: string } }) {
   // ---------- números do projeto ----------
   const raiz = tarefas.filter((t) => !t.pai_id);
   const prevTot = raiz.reduce((s, t) => s + Number(t.horas_previstas || 0), 0);
-  const realTot = Object.values(minPorTarefa).reduce((s, v) => s + v, 0);
+  const realTot = Object.values(minPorPessoa).reduce((s, v) => s + v, 0);
   const pctEtapa = (e: Etapa) => {
     const ts = raiz.filter((t) => t.etapa_id === e.id);
     const hp = ts.reduce((s, t) => s + Number(t.horas_previstas || 0), 0);
@@ -322,17 +340,27 @@ export default function ProjetoPg({ params }: { params: { id: string } }) {
 
   // ---------- Horas ----------
   const horasAba = (
+    <>
+    {admin && (
+      <div className="resumo box" style={{ marginBottom: 16, marginTop: 0 }}>
+        <span>Custo de horas <b>{moeda(custoTot) || "R$ 0"}</b></span>
+        {p.valor ? <span>Contrato <b>{moeda(p.valor)}</b></span> : null}
+        {p.valor && custoTot ? <span>Custo / contrato <b>{Math.round((custoTot / p.valor) * 100)}%</b></span> : null}
+        {p.area_m2 && custoTot ? <span>Custo por m² <b>{moeda(custoTot / p.area_m2)}</b></span> : null}
+      </div>
+    )}
     <div className="grid2">
       <section className="box">
         <h3 className="sec-t">Por pessoa</h3>
         {Object.keys(minPorPessoa).length === 0 ? <p className="note" style={{ margin: 0 }}>Nenhuma hora lançada.</p> : (
           <div className="stack" style={{ gap: 10 }}>
             {Object.entries(minPorPessoa).sort((a, b) => b[1] - a[1]).map(([id, min]) => {
-              const x = nomeDe(id);
+              const x = id.startsWith("nome:") ? null : nomeDe(id);
+              const nome = x?.nome ?? nomePessoa[id] ?? "—";
               return (
                 <div key={id} className="row" style={{ justifyContent: "space-between" }}>
-                  <span className="row" style={{ gap: 8 }}><Avatar nome={x?.nome} foto={x?.foto_url} size={26} />{x?.nome ?? "—"}</span>
-                  <strong>{horas(min)}</strong>
+                  <span className="row" style={{ gap: 8 }}><Avatar nome={nome} foto={x?.foto_url} size={26} />{nome}</span>
+                  <span>{admin && custoPorPessoa[id] ? <small className="note">{moeda(custoPorPessoa[id])} · </small> : null}<strong>{horas(min)}</strong></span>
                 </div>
               );
             })}
@@ -353,12 +381,16 @@ export default function ProjetoPg({ params }: { params: { id: string } }) {
               </div>
             );
           })}
+          {minSemTarefa > 0 && (
+            <div className="row" style={{ justifyContent: "space-between" }}><span>Sem tarefa</span><span>{horas(minSemTarefa)}</span></div>
+          )}
           <div className="row" style={{ justifyContent: "space-between", borderTop: "1px solid var(--line)", paddingTop: 10 }}>
             <strong>Total</strong><strong>{horas(realTot)} / {prevTot}h</strong>
           </div>
         </div>
       </section>
     </div>
+    </>
   );
 
   return (
