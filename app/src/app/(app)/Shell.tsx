@@ -17,6 +17,8 @@ const I = {
   projetos: <path d="M3 7h7l2 2h9v11H3z" />,
   equipe: <path d="M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5M16 4.5a3.5 3.5 0 0 1 0 6.5M18 14.8c2 .6 3.2 2.3 3.5 5.2" />,
   config: <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" />,
+  tarefas: <path d="M9 6h11M9 12h11M9 18h11M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2" />,
+  cadastros: <path d="M4 6c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3zM4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3" />,
   modelo: <path d="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6" />,
 };
 
@@ -63,12 +65,13 @@ export default function Shell({ ctx, children }: { ctx: Ctx; children: React.Rea
   }, [supabase, naSala, ctx.esc.id, ctx.eu.id]);
   const itens = [
     { href: "/inicio", t: "Início", ic: I.inicio },
-    { href: "/padroes", t: "Padrões", ic: I.padroes },
     { href: "/sala", t: "Sala", ic: I.sala },
     { href: "/projetos", t: "Projetos", ic: I.projetos },
+    { href: "/tarefas", t: "Tarefas", ic: I.tarefas },
+    { href: "/padroes", t: "Padrões", ic: I.padroes },
     { href: "/equipe", t: "Equipe", ic: I.equipe },
   ];
-  if (ctx.admin) itens.push({ href: "/config", t: "Configurações", ic: I.config });
+  if (ctx.admin) itens.push({ href: "/cadastros", t: "Cadastros", ic: I.cadastros }, { href: "/config", t: "Configurações", ic: I.config });
   const on = (h: string) => path === h || path.startsWith(h + "/");
 
   return (
