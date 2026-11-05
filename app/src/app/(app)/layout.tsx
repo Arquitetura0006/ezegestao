@@ -33,6 +33,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const v = lista.find((x) => x.escritorios?.slug === ESCRITORIO) ?? lista[0];
 
   if (!v?.escritorios) {
+    // Convidado de coordenação (cliente, engenharia do cliente, projetista): vai direto aos projetos dele
+    await supabase.rpc("coord_aplicar_convites");
+    const { data: coord } = await supabase.rpc("coord_meus_projetos");
+    if ((coord ?? []).length > 0) redirect("/c");
     return (
       <main className="wrap" style={{ maxWidth: 620 }}>
         <p className="mono" style={{ marginBottom: 12 }}>EZE Gestão · Acesso pendente</p>
