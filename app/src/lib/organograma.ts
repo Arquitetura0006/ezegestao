@@ -45,9 +45,11 @@ function montar(nos: Esboco[], liga: [string, string, TipoVinculo, string?][]) {
     ids[e.k] = novoId();
     return { id: ids[e.k], type: e.type, position: { x: e.x, y: e.y }, data: e.data };
   });
-  const v: VinculoSalvo[] = liga.map(([a, b, tipo, rotulo]) => ({
-    id: novoId("e"), source: ids[a], target: ids[b], sourceHandle: "b", targetHandle: "t", data: { tipo, rotulo },
-  }));
+  const pos: Record<string, Esboco> = Object.fromEntries(nos.map((e) => [e.k, e]));
+  const v: VinculoSalvo[] = liga.map(([a, b, tipo, rotulo]) => {
+    const lado = Math.abs(pos[a].y - pos[b].y) < 40;
+    return { id: novoId("e"), source: ids[a], target: ids[b], sourceHandle: lado ? "r" : "b", targetHandle: lado ? "l" : "t", data: { tipo, rotulo } };
+  });
   return { nos: n, arestas: v };
 }
 
@@ -64,19 +66,19 @@ export const MODELOS: { id: string; nome: string; desc: string; criar: () => { n
     criar: () =>
       montar(
         [
-          { k: "cli", type: "empresa", x: 300, y: 0, data: { nome: "Cliente / Incorporadora", forma: "reto", escuro: true } },
-          fn("eng", 640, 0, "Engenharia do cliente", "cliente"),
-          fn("coo", 300, 160, "Coordenação de projetos", "coordenacao", undefined, { destaque: true }),
+          { k: "cli", type: "empresa", x: 400, y: 0, data: { nome: "Cliente / Incorporadora", forma: "reto", escuro: true } },
+          fn("eng", 800, 0, "Engenharia do cliente", "cliente"),
+          fn("coo", 400, 160, "Coordenação de projetos", "coordenacao", undefined, { destaque: true }),
           fn("arq", 0, 330, "Criação · Arquitetura", "disciplina", "Arquitetura"),
-          fn("est", 200, 330, "Estrutural", "disciplina", "Estrutura"),
-          fn("ele", 400, 330, "Elétrico", "disciplina", "Elétrico"),
-          fn("hid", 600, 330, "Hidrossanitário", "disciplina", "Hidrossanitário"),
-          fn("ppi", 800, 330, "Preventivo de incêndio", "disciplina", "Incêndio"),
+          fn("est", 260, 330, "Estrutural", "disciplina", "Estrutura"),
+          fn("ele", 520, 330, "Elétrico", "disciplina", "Elétrico"),
+          fn("hid", 780, 330, "Hidrossanitário", "disciplina", "Hidrossanitário"),
+          fn("ppi", 1040, 330, "Preventivo de incêndio", "disciplina", "Incêndio"),
           vaga("parq", 30, 480, "Arquiteto(a)"),
-          vaga("pest", 230, 480, "Engenheiro(a) estrutural"),
-          vaga("pele", 430, 480, "Projetista elétrico"),
-          vaga("phid", 630, 480, "Projetista hidrossanitário"),
-          vaga("pppi", 830, 480, "Projetista PPCI"),
+          vaga("pest", 290, 480, "Engenheiro(a) estrutural"),
+          vaga("pele", 550, 480, "Projetista elétrico"),
+          vaga("phid", 810, 480, "Projetista hidrossanitário"),
+          vaga("pppi", 1070, 480, "Projetista PPCI"),
         ],
         [
           ["cli", "coo", "subordinacao", "contrata"],
@@ -101,14 +103,14 @@ export const MODELOS: { id: string; nome: string; desc: string; criar: () => { n
     criar: () =>
       montar(
         [
-          { k: "cli", type: "empresa", x: 220, y: 0, data: { nome: "Cliente", forma: "reto", escuro: true } },
-          fn("coo", 220, 150, "Coordenação e criação", "coordenacao", undefined, { destaque: true }),
+          { k: "cli", type: "empresa", x: 280, y: 0, data: { nome: "Cliente", forma: "reto", escuro: true } },
+          fn("coo", 280, 150, "Coordenação e criação", "coordenacao", undefined, { destaque: true }),
           fn("arq", 0, 310, "Arquitetura", "disciplina", "Arquitetura"),
-          fn("est", 220, 310, "Estrutural", "disciplina", "Estrutura"),
-          fn("com", 440, 310, "Elétrico e hidrossanitário", "disciplina", "Elétrico"),
+          fn("est", 280, 310, "Estrutural", "disciplina", "Estrutura"),
+          fn("com", 560, 310, "Elétrico e hidrossanitário", "disciplina", "Elétrico"),
           vaga("parq", 30, 460, "Arquiteto(a)"),
-          vaga("pest", 250, 460, "Engenheiro(a) estrutural"),
-          vaga("pcom", 470, 460, "Projetista complementar"),
+          vaga("pest", 310, 460, "Engenheiro(a) estrutural"),
+          vaga("pcom", 590, 460, "Projetista complementar"),
         ],
         [
           ["cli", "coo", "subordinacao"],
