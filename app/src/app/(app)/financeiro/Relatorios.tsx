@@ -244,7 +244,7 @@ export default function Relatorios({ base }: { base: Base }) {
 
   return (
     <>
-      <div className="tabs" role="tablist" style={{ marginBottom: 14, background: "transparent", padding: 0, flexWrap: "wrap" }}>
+      <div className="tabs seg" role="tablist" style={{ marginBottom: 14, background: "transparent", padding: 0, flexWrap: "wrap" }}>
         {([["fluxo", "Fluxo mensal"], ["dre", "DRE"], ["projetos", "Recebimentos por projeto"], ["categorias", "Despesas por categoria"], ["fornecedores", "Fornecedores e Partners"]] as [Rel, string][]).map(([k, t]) => (
           <button key={k} type="button" className={rel === k ? "on" : ""} onClick={() => setRel(k)}>{t}</button>
         ))}

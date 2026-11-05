@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabaseNavegador } from "@/lib/supabase/client";
-import { useApp } from "../ctx";
+import { useApp, usePode } from "../ctx";
 import { Avatar, Cabeca, Vazio } from "../ui";
 import { erroMsg } from "@/lib/util";
 import { STATUS_PROJ, TIPOLOGIAS, dia, nomeProjeto, type Cliente, type StatusProj } from "@/lib/gestor";
@@ -20,7 +20,8 @@ type Novo = { nome: string; tipologia: string; cliente_id: string; cidade: strin
 const STATUS_QUADRO: StatusProj[] = ["pendente", "andamento", "pausado", "finalizado"];
 
 export default function Projetos() {
-  const { esc, admin } = useApp();
+  const { esc } = useApp();
+  const admin = usePode("projetos", true);
   const supabase = useMemo(() => supabaseNavegador(), []);
   const router = useRouter();
   const [lista, setLista] = useState<Proj[] | null>(null);
@@ -147,7 +148,7 @@ export default function Projetos() {
               </select>
             )}
           </div>
-          <div className="tabs" role="tablist">
+          <div className="tabs seg" role="tablist">
             <button type="button" className={vista === "lista" ? "on" : ""} onClick={() => setVista("lista")}>Lista</button>
             <button type="button" className={vista === "quadro" ? "on" : ""} onClick={() => setVista("quadro")}>Quadro</button>
           </div>

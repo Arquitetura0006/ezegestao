@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabaseNavegador } from "@/lib/supabase/client";
-import { useApp } from "../ctx";
+import { useApp, usePode } from "../ctx";
 import { Avatar } from "../ui";
 import { erroMsg } from "@/lib/util";
 import { EVENTO, cronAtual, iniciar, parar } from "@/lib/cronometro";
@@ -26,7 +26,10 @@ export default function TarefaPainel({
   onClose: () => void;
   onChange: () => void;
 }) {
-  const { eu, esc, admin } = useApp();
+  const { eu, esc } = useApp();
+  const editarProj = usePode("projetos", true);
+  const editarPlan = usePode("planejamento", true);
+  const admin = editarProj || editarPlan;
   const supabase = useMemo(() => supabaseNavegador(), []);
   const [t, setT] = useState<Tarefa | null>(null);
   const [itens, setItens] = useState<Item[]>([]);

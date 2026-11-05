@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabaseNavegador } from "@/lib/supabase/client";
-import { useApp } from "../../ctx";
+import { useApp, usePode } from "../../ctx";
 import { Vazio } from "../../ui";
 import { dataHora, erroMsg } from "@/lib/util";
 import { TIPOLOGIAS, moeda, type Cliente, type Pessoa } from "@/lib/gestor";
@@ -19,7 +19,8 @@ type Ativ = { id: string; tipo: TipoAtiv; texto: string; created_at: string; aut
 const dataBR = (d?: string | null) => (d ? d.slice(0, 10).split("-").reverse().join("/") : "");
 
 export default function PropostaPg({ params }: { params: { id: string } }) {
-  const { esc, admin } = useApp();
+  const { esc } = useApp();
+  const admin = usePode("comercial");
   const supabase = useMemo(() => supabaseNavegador(), []);
   const router = useRouter();
   const sp = useSearchParams();
@@ -56,7 +57,7 @@ export default function PropostaPg({ params }: { params: { id: string } }) {
     supabase.from("etapas_modelo").select("sigla,nome,ordem").eq("escritorio_id", esc.id).eq("ativo", true).order("ordem").then(({ data }) => setEtapas((data as EtM[]) ?? []));
   }, [carregar, supabase, esc.id]);
 
-  if (!admin) return <Vazio titulo="Só para administradores" />;
+  if (!admin) return <Vazio titulo="Sem acesso ao comercial" texto="Peça a permissão do módulo Comercial." />;
   if (p === undefined) return <p className="note">Carregando…</p>;
   if (p === null) return <Vazio titulo="Proposta não encontrada"><Link className="btn small" href="/comercial">Voltar</Link></Vazio>;
 

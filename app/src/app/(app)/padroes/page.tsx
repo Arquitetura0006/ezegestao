@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabaseNavegador } from "@/lib/supabase/client";
-import { useApp } from "../ctx";
+import { useApp, usePode } from "../ctx";
 import { Cabeca, Vazio } from "../ui";
 import Sub from "./Sub";
 import { erroMsg } from "@/lib/util";
@@ -12,7 +12,8 @@ import { erroMsg } from "@/lib/util";
 type Trilha = { id: string; titulo: string; descricao: string | null; publicada: boolean; ordem: number; aulas: { id: string; publicada: boolean }[] };
 
 export default function Padroes() {
-  const { eu, esc, admin } = useApp();
+  const { eu, esc } = useApp();
+  const admin = usePode("padroes", true);
   const supabase = useMemo(() => supabaseNavegador(), []);
   const router = useRouter();
   const [trilhas, setTrilhas] = useState<Trilha[] | null>(null);
