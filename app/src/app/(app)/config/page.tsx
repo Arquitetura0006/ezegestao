@@ -16,6 +16,7 @@ export default function Config() {
   const [ambs, setAmbs] = useState<Amb[] | null>(null);
   const [orig, setOrig] = useState<Record<string, string>>({});
   const [msg, setMsg] = useState<{ t: "ok" | "err"; s: string } | null>(null);
+  const [geral, setGeral] = useState("");
 
   const carregar = useCallback(async () => {
     const { data } = await supabase.from("ambientes").select("id,nome,tipo,link_chamada,ordem").eq("escritorio_id", esc.id).order("ordem");
@@ -52,6 +53,17 @@ export default function Config() {
 
   const editaveis = (ambs ?? []).filter((a) => a.tipo !== "jardim" && a.tipo !== "projetos");
 
+  // Preenche de uma vez todos os ambientes que ainda não têm link (não sobrescreve os que já têm).
+  function aplicarGeral() {
+    const link = geral.trim();
+    if (!/^https?:\/\//.test(link)) return setMsg({ t: "err", s: "O link precisa começar com https://" });
+    if (!ambs) return;
+    const ids = new Set(editaveis.filter((a) => !(a.link_chamada || "").trim()).map((a) => a.id));
+    if (!ids.size) return setMsg({ t: "ok", s: "Todos os ambientes já têm link." });
+    setAmbs(ambs.map((x) => (ids.has(x.id) ? { ...x, link_chamada: link } : x)));
+    setMsg({ t: "ok", s: `Link aplicado em ${ids.size} ambiente(s). Clique em “Salvar ambientes” para gravar.` });
+  }
+
   return (
     <>
       <Cabeca kicker={esc.nome} titulo="Configurações" />
@@ -74,6 +86,13 @@ export default function Config() {
           <p className="note">Carregando…</p>
         ) : (
           <div className="stack" style={{ marginTop: 12 }}>
+            <div className="row" style={{ alignItems: "flex-end", paddingBottom: 12, borderBottom: "1px solid var(--line, #ddd)" }}>
+              <label className="form-l" style={{ flex: "1 1 260px" }}>
+                <span>Link único para o escritório todo</span>
+                <input type="url" value={geral} placeholder="https://meet.google.com/…" onChange={(e) => setGeral(e.target.value)} />
+              </label>
+              <button className="btn" type="button" onClick={aplicarGeral}>Usar nos ambientes sem link</button>
+            </div>
             {editaveis.map((a, i) => (
               <div key={a.id} className="grid2" style={{ gap: 10, alignItems: "end", gridTemplateColumns: "minmax(0,1fr) minmax(0,1.6fr)" }}>
                 <label className="form-l">
