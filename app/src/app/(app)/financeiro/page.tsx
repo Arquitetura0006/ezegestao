@@ -212,7 +212,7 @@ function Receber({ base, versao, abrir }: { base: Base; versao: number; abrir: (
   return (
     <>
       <div className="row" style={{ justifyContent: "space-between", marginBottom: 14 }}>
-        <div className="tabs" role="tablist">
+        <div className="tabs seg" role="tablist">
           <button type="button" className={tipo === "receita" ? "on" : ""} onClick={() => setTipo("receita")}>A receber</button>
           <button type="button" className={tipo === "despesa" ? "on" : ""} onClick={() => setTipo("despesa")}>A pagar</button>
         </div>

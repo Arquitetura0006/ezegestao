@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabaseNavegador } from "@/lib/supabase/client";
-import { useApp } from "../ctx";
+import { useApp, usePode } from "../ctx";
 import { Avatar, Cabeca, Vazio } from "../ui";
 import { erroMsg } from "@/lib/util";
 import {
@@ -17,7 +17,13 @@ type Membro = Pessoa & { horas_semana: number };
 type Aba = "lista" | "quadro" | "carga";
 
 export default function Tarefas() {
-  const { eu, esc, admin } = useApp();
+  const { eu, esc } = useApp();
+  const verPlan = usePode("planejamento");
+  const verProj = usePode("projetos");
+  const edPlan = usePode("planejamento", true);
+  const edProj = usePode("projetos", true);
+  const verTodos = verPlan || verProj;
+  const editar = edPlan || edProj;
   const supabase = useMemo(() => supabaseNavegador(), []);
   const [lista, setLista] = useState<T[] | null>(null);
   const [equipe, setEquipe] = useState<Membro[]>([]);
@@ -145,8 +151,8 @@ export default function Tarefas() {
 
   return (
     <>
-      <Cabeca kicker={esc.nome} titulo="Tarefas">
-        {admin && aba !== "carga" && (
+      <Cabeca kicker={esc.nome} titulo="Planejamento">
+        {verTodos && aba !== "carga" && (
           <select className="f" style={{ width: "auto" }} value={quem} onChange={(e) => setQuem(e.target.value)} aria-label="Responsável">
             <option value={eu.id}>Minhas tarefas</option>
             <option value="todos">Toda a equipe</option>
@@ -158,7 +164,7 @@ export default function Tarefas() {
       <div className="tabs" role="tablist" style={{ marginBottom: 20 }}>
         <button type="button" className={aba === "lista" ? "on" : ""} onClick={() => setAba("lista")}>Lista</button>
         <button type="button" className={aba === "quadro" ? "on" : ""} onClick={() => setAba("quadro")}>Quadro</button>
-        {admin && <button type="button" className={aba === "carga" ? "on" : ""} onClick={() => setAba("carga")}>Carga da equipe</button>}
+        {verTodos && <button type="button" className={aba === "carga" ? "on" : ""} onClick={() => setAba("carga")}>Carga da equipe</button>}
       </div>
 
       {erro && <p className="err" role="alert" style={{ marginBottom: 12 }}>{erro}</p>}
@@ -177,7 +183,7 @@ export default function Tarefas() {
                 onDrop={(e) => { const id = e.dataTransfer.getData("text/plain"); const t = raiz.find((x) => x.id === id); if (t && t.status !== s) mover(t, s); }}>
                 <h2 className="col-t">{STATUS_TAREFA[s]} <small>{raiz.filter((t) => t.status === s).length}</small></h2>
                 {col.map((t) => (
-                  <div key={t.id} draggable={admin || t.responsavel_id === eu.id} onDragStart={(e) => e.dataTransfer.setData("text/plain", t.id)}>
+                  <div key={t.id} draggable={editar || t.responsavel_id === eu.id} onDragStart={(e) => e.dataTransfer.setData("text/plain", t.id)}>
                     <Cartao t={t} />
                   </div>
                 ))}
@@ -187,7 +193,7 @@ export default function Tarefas() {
         </div>
       ) : (
         <>
-          <div className="tabs" role="tablist" style={{ marginBottom: 14, background: "transparent", padding: 0 }}>
+          <div className="tabs seg" role="tablist" style={{ marginBottom: 14, background: "transparent", padding: 0 }}>
             {([["proximas", "Próximas"], ["atrasadas", "Atrasadas"], ["backlog", "Backlog"], ["concluidas", "Concluídas"]] as const).map(([k, t]) => (
               <button key={k} type="button" className={grupo === k ? "on" : ""} onClick={() => setGrupo(k)}>{t} ({grupos[k].length})</button>
             ))}

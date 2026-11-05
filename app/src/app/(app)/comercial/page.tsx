@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabaseNavegador } from "@/lib/supabase/client";
-import { useApp } from "../ctx";
+import { useApp, usePode } from "../ctx";
 import { Cabeca, Vazio } from "../ui";
 import { erroMsg } from "@/lib/util";
 import { TIPOLOGIAS, dia, hoje, moeda, type Cliente } from "@/lib/gestor";
@@ -16,7 +16,8 @@ type Novo = { nome: string; tipologia: string; cliente_id: string; contato: stri
 const num = (s: string) => (s.trim() ? Number(s.replace(/\./g, "").replace(",", ".")) : null);
 
 export default function Comercial() {
-  const { esc, admin } = useApp();
+  const { esc } = useApp();
+  const admin = usePode("comercial");
   const supabase = useMemo(() => supabaseNavegador(), []);
   const router = useRouter();
   const [lista, setLista] = useState<Proposta[] | null>(null);
@@ -38,7 +39,7 @@ export default function Comercial() {
     supabase.from("clientes").select("id,nome").eq("escritorio_id", esc.id).eq("ativo", true).order("nome").then(({ data }) => setClientes((data as Cliente[]) ?? []));
   }, [carregar, supabase, esc.id]);
 
-  if (!admin) return <Vazio titulo="Só para administradores" />;
+  if (!admin) return <Vazio titulo="Sem acesso ao comercial" texto="Peça a permissão do módulo Comercial." />;
 
   async function criar(e: React.FormEvent) {
     e.preventDefault();
@@ -205,7 +206,7 @@ export default function Comercial() {
             </select>
           )}
         </div>
-        <div className="tabs" role="tablist">
+        <div className="tabs seg" role="tablist">
           {([["funil", "Funil"], ["lista", "Lista"], ["painel", "Painel"]] as [Aba, string][]).map(([k, t]) => (
             <button key={k} type="button" className={aba === k ? "on" : ""} onClick={() => setAba(k)}>{t}</button>
           ))}

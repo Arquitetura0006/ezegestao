@@ -57,7 +57,7 @@ export default function CadastrosFin({ base, onChange }: { base: Base; onChange:
 
   return (
     <>
-      <div className="tabs" role="tablist" style={{ marginBottom: 16, background: "transparent", padding: 0 }}>
+      <div className="tabs seg" role="tablist" style={{ marginBottom: 16, background: "transparent", padding: 0 }}>
         {([["caixas", "Caixas"], ["categorias", "Plano de contas"], ["fornecedores", "Fornecedores e Partners"]] as [Aba, string][]).map(([k, t]) => (
           <button key={k} type="button" className={aba === k ? "on" : ""} onClick={() => setAba(k)}>{t}</button>
         ))}

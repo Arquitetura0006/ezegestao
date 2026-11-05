@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabaseNavegador } from "@/lib/supabase/client";
-import { useApp } from "../ctx";
+import { useApp, usePode } from "../ctx";
 import { Cabeca, Vazio } from "../ui";
 import { erroMsg } from "@/lib/util";
 import { dia, hoje, horas, iso, moeda, nomeProjeto, segunda, somaDias } from "@/lib/gestor";
@@ -18,7 +18,8 @@ type Aba = "minhas" | "equipe" | "projetos";
 const DIAS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
 
 export default function Horas() {
-  const { esc, admin } = useApp();
+  const { esc } = useApp();
+  const admin = usePode("horas");
   const [aba, setAba] = useState<Aba>("minhas");
   return (
     <>
@@ -38,7 +39,8 @@ export default function Horas() {
 }
 
 function Minhas() {
-  const { eu, esc, admin } = useApp();
+  const { eu, esc } = useApp();
+  const admin = usePode("projetos");
   const supabase = useMemo(() => supabaseNavegador(), []);
   const [projetos, setProjetos] = useState<Proj[]>([]);
   const [tarefas, setTarefas] = useState<Tf[]>([]);

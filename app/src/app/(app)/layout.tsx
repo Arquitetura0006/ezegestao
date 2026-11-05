@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { supabaseServidor, ESCRITORIO } from "@/lib/supabase/server";
 import { MODELO_URL, type Papel } from "@/lib/util";
 import Shell from "./Shell";
+import { podeCom, type Permissoes } from "@/lib/permissoes";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +18,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const [{ data: perfil }, { data: vinculos }] = await Promise.all([
     supabase.from("perfis").select("id,nome,email,foto_url,cidade").eq("id", user.id).maybeSingle(),
-    supabase.from("membros").select("papel, acesso_financeiro, escritorios(id,nome,slug)").eq("perfil_id", user.id).eq("ativo", true),
+    supabase.from("membros").select("*, escritorios(id,nome,slug)").eq("perfil_id", user.id).eq("ativo", true),
   ]);
 
   // Foto da conta Google: completa o perfil se ainda estiver vazio.
@@ -27,7 +28,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     perfil.foto_url = fotoGoogle;
   }
 
-  type V = { papel: Papel; acesso_financeiro: boolean; escritorios: { id: string; nome: string; slug: string } | null };
+  type V = { papel: Papel; acesso_financeiro: boolean; permissoes?: Permissoes | null; escritorios: { id: string; nome: string; slug: string } | null };
   const lista = (vinculos ?? []) as unknown as V[];
   const v = lista.find((x) => x.escritorios?.slug === ESCRITORIO) ?? lista[0];
 
@@ -53,6 +54,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   }
 
   const papel = v.papel;
+  const perm = (v.permissoes ?? {}) as Permissoes;
+  const acessoFin = !!v.acesso_financeiro;
   return (
     <Shell
       ctx={{
@@ -66,7 +69,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         esc: v.escritorios,
         papel,
         admin: papel === "dono" || papel === "admin",
-        financeiro: papel === "dono" || !!v.acesso_financeiro,
+        financeiro: podeCom(papel, acessoFin, perm, "financeiro"),
+        acessoFin,
+        perm,
       }}
     >
       {children}

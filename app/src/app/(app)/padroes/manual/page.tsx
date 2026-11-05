@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabaseNavegador } from "@/lib/supabase/client";
-import { useApp } from "../../ctx";
+import { useApp, usePode } from "../../ctx";
 import { Cabeca, Vazio } from "../../ui";
 import Sub from "../Sub";
 import { dataCurta, erroMsg } from "@/lib/util";
@@ -11,7 +11,8 @@ type Doc = { id: string; categoria: string; titulo: string; corpo: string; ordem
 const VAZIO = { id: "", categoria: "", titulo: "", corpo: "" };
 
 export default function Manual() {
-  const { esc, admin } = useApp();
+  const { esc } = useApp();
+  const admin = usePode("padroes", true);
   const supabase = useMemo(() => supabaseNavegador(), []);
   const [docs, setDocs] = useState<Doc[] | null>(null);
   const [aberto, setAberto] = useState<string | null>(null);

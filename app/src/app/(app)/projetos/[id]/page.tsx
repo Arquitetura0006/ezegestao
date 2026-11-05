@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabaseNavegador } from "@/lib/supabase/client";
-import { useApp } from "../../ctx";
+import { useApp, usePode } from "../../ctx";
 import { Avatar, Vazio } from "../../ui";
 import { dataHora, erroMsg } from "@/lib/util";
 import {
@@ -24,7 +24,9 @@ type Aba = "eap" | "cronograma" | "horas" | "equipe";
 const CAMPOS_PROJ = "id,codigo,nome,tipologia,cidade,endereco,area_m2,valor,status,inicio,termino,cliente_id,coordenador_id,escopo,ativo,pasta_url,cliente:clientes(nome)";
 
 export default function ProjetoPg({ params }: { params: { id: string } }) {
-  const { eu, esc, admin } = useApp();
+  const { eu, esc } = useApp();
+  const admin = usePode("projetos", true);
+  const sens = usePode("sensiveis");
   const supabase = useMemo(() => supabaseNavegador(), []);
   const [p, setP] = useState<Proj | null | undefined>(undefined);
   const [etapas, setEtapas] = useState<Etapa[]>([]);
@@ -360,7 +362,7 @@ export default function ProjetoPg({ params }: { params: { id: string } }) {
               return (
                 <div key={id} className="row" style={{ justifyContent: "space-between" }}>
                   <span className="row" style={{ gap: 8 }}><Avatar nome={nome} foto={x?.foto_url} size={26} />{nome}</span>
-                  <span>{admin && custoPorPessoa[id] ? <small className="note">{moeda(custoPorPessoa[id])} · </small> : null}<strong>{horas(min)}</strong></span>
+                  <span>{sens && custoPorPessoa[id] ? <small className="note">{moeda(custoPorPessoa[id])} · </small> : null}<strong>{horas(min)}</strong></span>
                 </div>
               );
             })}
@@ -472,7 +474,8 @@ export default function ProjetoPg({ params }: { params: { id: string } }) {
 
 // Partners do projeto e recados (o que já existia, agora numa aba)
 function EquipeRecados({ projetoId, membros, equipe, onChange }: { projetoId: string; membros: Pessoa[]; equipe: Pessoa[]; onChange: () => void }) {
-  const { eu, esc, admin } = useApp();
+  const { eu, esc } = useApp();
+  const admin = usePode("projetos", true);
   const supabase = useMemo(() => supabaseNavegador(), []);
   const [recados, setRecados] = useState<Rec[]>([]);
   const [texto, setTexto] = useState("");
