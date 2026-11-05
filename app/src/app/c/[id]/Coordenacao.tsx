@@ -14,6 +14,7 @@ import NovoItem, { type Rascunho } from "./NovoItem";
 import Modelos from "./Modelos";
 import Pessoas from "./Pessoas";
 import Ajustes from "./Ajustes";
+import { norm, responsaveisPorDisciplina, type NoSalvo, type VinculoSalvo } from "@/lib/organograma";
 
 export type Eu = { id: string; nome: string; foto: string | null; email: string };
 type Aba = "itens" | "modelos" | "pessoas" | "ajustes";
@@ -54,6 +55,7 @@ export default function Coordenacao({ projeto, eu }: { projeto: ProjetoCoord; eu
   const [pessoas, setPessoas] = useState<Pessoa[]>([]);
   const [etapas, setEtapas] = useState<{ sigla: string; nome: string }[]>([]);
   const [tipos, setTipos] = useState<string[]>([]);
+  const [porDisciplina, setPorDisciplina] = useState<Record<string, string[]>>({});
   const [carregados, setCarregados] = useState<Record<string, string>>({}); // modelo → revisão carregada
   const [baixando, setBaixando] = useState<Record<string, boolean>>({});
   const [visiveis, setVisiveis] = useState<Record<string, boolean>>({});
@@ -100,6 +102,11 @@ export default function Coordenacao({ projeto, eu }: { projeto: ProjetoCoord; eu
     carregarItens();
     carregarModelos();
     carregarPessoas();
+    supabase.from("projeto_organogramas").select("nos,arestas").eq("projeto_id", projeto.id).maybeSingle()
+      .then(({ data }) => {
+        const o = data as { nos: NoSalvo[]; arestas: VinculoSalvo[] } | null;
+        if (o) setPorDisciplina(responsaveisPorDisciplina(o.nos, o.arestas));
+      });
     if (projeto.equipe) {
       supabase.from("etapas_modelo").select("sigla,nome").eq("escritorio_id", projeto.escritorio_id).eq("ativo", true).order("ordem")
         .then(({ data }) => setEtapas((data as { sigla: string; nome: string }[]) ?? []));
@@ -308,6 +315,7 @@ export default function Coordenacao({ projeto, eu }: { projeto: ProjetoCoord; eu
         </div>
         <div className="row" style={{ gap: 6, flexWrap: "nowrap" }}>
           <button type="button" className="btn small ghost cd-so-cel" onClick={() => setLateral((x) => !x)}>{lateral ? "Ver 3D" : "Lista"}</button>
+          <Link href={`/c/${projeto.id}/organograma`} className="btn small">Organograma</Link>
           <Link href="/c" className="btn small ghost">Projetos</Link>
           {!projeto.equipe && (
             <form action="/auth/sair" method="post">
@@ -486,6 +494,7 @@ export default function Coordenacao({ projeto, eu }: { projeto: ProjetoCoord; eu
           modelos={modelos}
           etapas={etapas}
           tipos={tipos}
+          sugeridos={(modeloId) => porDisciplina[norm(modelos.find((m) => m.id === modeloId)?.nome)] ?? []}
           onClose={() => setRascunho(null)}
           onSalvo={async (id) => {
             setRascunho(null);

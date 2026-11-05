@@ -588,3 +588,53 @@ input[type=search]:focus { border-color: var(--fg); outline: none; }
   .cd-painel { width: 100%; }
 }
 .cd-topo .btn { white-space: nowrap; }
+
+/* ===================== Organograma do projeto ===================== */
+.og-corpo { flex: 1; min-height: 0; display: grid; grid-template-columns: 250px minmax(0, 1fr); border-top: 1px solid var(--line); }
+.og-corpo.so-ver { grid-template-columns: minmax(0, 1fr); }
+.og-lado { background: var(--bg); border-right: 1px solid var(--line); overflow-y: auto; padding: 14px 14px 40px; display: flex; flex-direction: column; gap: 8px; }
+.og-paleta { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.og-add { height: 54px; border: 1.5px solid var(--fg); background: var(--bg); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; color: var(--fg); }
+.og-add:hover { background: var(--soft); }
+.og-add-pessoa { border-radius: 999px; }
+.og-add-funcao { border-radius: 12px; }
+.og-add-empresa { border-radius: 2px; background: var(--fg); color: #fff; }
+.og-add-empresa:hover { background: #2b2e35; }
+.og-add-nota { border-radius: 2px; border-style: dashed; }
+.og-vtipo { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 8px; cursor: pointer; font-size: 13.5px; }
+.og-vtipo input { margin: 0; }
+.og-vtipo.on { background: var(--soft); font-weight: 600; }
+.og-modelo { text-align: left; border: 1px solid var(--line); background: var(--bg); border-radius: 10px; padding: 9px 11px; font: inherit; cursor: pointer; display: flex; flex-direction: column; gap: 2px; }
+.og-modelo:hover { border-color: #b9bcc2; }
+.og-modelo strong { font-size: 13.5px; }
+.og-modelo small { font-size: 12px; color: var(--muted); line-height: 1.35; }
+.og-quadro { position: relative; min-width: 0; min-height: 0; background: #fafafb; }
+.og-insp { position: absolute; top: 12px; right: 12px; width: min(300px, calc(100% - 24px)); max-height: calc(100% - 24px); overflow: auto; background: var(--bg); border: 1px solid var(--line); border-radius: 14px; padding: 14px; box-shadow: 0 10px 30px rgba(16,24,40,.14); z-index: 6; }
+
+.og-card { position: relative; display: flex; align-items: center; gap: 10px; min-width: 150px; max-width: 240px; padding: 10px 14px; background: #fff; color: #16181d; border: 1.5px solid #16181d; font-family: var(--body); }
+.og-card.og-f-reto { border-radius: 2px; }
+.og-card.og-f-arredondado { border-radius: 14px; }
+.og-card.og-f-redondo { border-radius: 999px; padding-left: 8px; padding-right: 18px; }
+.og-card.og-dest { border-width: 3px; }
+.og-card.og-esc { background: #16181d; color: #fff; }
+.og-card.og-esc .og-txt small { color: #c9ccd1; }
+.og-card.og-vaga { border-style: dashed; }
+.og-card.og-nota { background: #f4f5f7; border-style: dashed; border-color: #8e929a; font-size: 13px; max-width: 260px; }
+.og-card.og-sel { box-shadow: 0 0 0 3px #fff, 0 0 0 5px #16181d; }
+.og-av { flex: none; width: 34px; height: 34px; border-radius: 50%; background: #e4e6ea; color: #16181d; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12.5px; overflow: hidden; }
+.og-av img { width: 100%; height: 100%; object-fit: cover; }
+.og-txt { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
+.og-txt strong { font-size: 13.5px; font-weight: 700; overflow-wrap: anywhere; white-space: pre-wrap; }
+.og-txt small { font-size: 11.5px; color: #666a72; }
+.og-tag { font-size: 10px !important; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: inherit !important; opacity: .65; }
+.og-ponto { width: 9px !important; height: 9px !important; background: #fff !important; border: 1.5px solid #16181d !important; opacity: 0; transition: opacity .15s; }
+.react-flow__node:hover .og-ponto, .react-flow__node.selected .og-ponto, .react-flow.connecting .og-ponto { opacity: 1; }
+.so-ver .og-ponto { display: none; }
+.og-quadro .react-flow__edge.selected path.react-flow__edge-path { stroke-width: 2.8 !important; }
+.og-quadro .react-flow__controls { box-shadow: 0 1px 4px rgba(16,24,40,.12); border-radius: 8px; overflow: hidden; }
+.og-quadro .react-flow__minimap { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+@media (max-width: 860px) {
+  .og-corpo { grid-template-columns: minmax(0, 1fr); }
+  .og-lado { display: none; }
+  .og-insp { top: auto; bottom: 12px; max-height: 55%; }
+}

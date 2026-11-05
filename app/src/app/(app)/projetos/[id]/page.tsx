@@ -460,7 +460,10 @@ export default function ProjetoPg({ params }: { params: { id: string } }) {
             <button key={k} type="button" role="tab" aria-selected={aba === k} className={aba === k ? "on" : ""} onClick={() => setAba(k)}>{t}</button>
           ))}
         </div>
-        <Link href={`/c/${params.id}`} className="btn small dark">Coordenação 3D</Link>
+        <div className="row" style={{ gap: 6 }}>
+          <Link href={`/c/${params.id}/organograma`} className="btn small">Organograma</Link>
+          <Link href={`/c/${params.id}`} className="btn small dark">Coordenação 3D</Link>
+        </div>
       </div>
 
       {erro && <p className="err" role="alert" style={{ marginBottom: 12 }}>{erro}</p>}

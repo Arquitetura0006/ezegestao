@@ -17,10 +17,10 @@ export type Rascunho = {
 };
 
 export default function NovoItem({
-  projeto, rascunho, pessoas, modelos, etapas, tipos, onClose, onSalvo,
+  projeto, rascunho, pessoas, modelos, etapas, tipos, sugeridos, onClose, onSalvo,
 }: {
   projeto: ProjetoCoord; rascunho: Rascunho; pessoas: Pessoa[]; modelos: Modelo[];
-  etapas: { sigla: string; nome: string }[]; tipos: string[];
+  etapas: { sigla: string; nome: string }[]; tipos: string[]; sugeridos: (modeloId: string) => string[];
   onClose: () => void; onSalvo: (id: string) => void;
 }) {
   const supabase = useMemo(() => supabaseNavegador(), []);
@@ -35,7 +35,8 @@ export default function NovoItem({
   const [prioridade, setPrioridade] = useState<Prioridade>("media");
   const [prazo, setPrazo] = useState("");
   const [interno, setInterno] = useState(false);
-  const [resp, setResp] = useState<string[]>([]);
+  const [resp, setResp] = useState<string[]>(() => sugeridos(rascunho.pick?.modelo ?? rascunho.visiveis[0] ?? ""));
+  const [mexeuResp, setMexeuResp] = useState(false);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState("");
 
@@ -188,7 +189,7 @@ export default function NovoItem({
           <textarea placeholder="Descrição (o que está errado e o que se espera)" value={descricao} onChange={(e) => setDescricao(e.target.value)} />
           <div className="grid2" style={{ gap: 10 }}>
             <label className="form-l"><span>Disciplina</span>
-              <select className="f" value={modelo} onChange={(e) => setModelo(e.target.value)}>
+              <select className="f" value={modelo} onChange={(e) => { setModelo(e.target.value); if (!mexeuResp) setResp(sugeridos(e.target.value)); }}>
                 <option value="">Geral</option>
                 {modelos.map((m) => <option key={m.id} value={m.id}>{m.nome}</option>)}
               </select>
@@ -214,7 +215,7 @@ export default function NovoItem({
           </div>
 
           <div className="form-l">
-            <span>Responsáveis</span>
+            <span>Responsáveis{resp.length > 0 && !mexeuResp ? " (sugeridos pelo organograma)" : ""}</span>
             {grupos.map((g) => g.l.length > 0 && (
               <div key={g.t} style={{ marginTop: 4 }}>
                 <p className="note" style={{ margin: "0 0 4px" }}>{g.t}</p>
@@ -224,7 +225,7 @@ export default function NovoItem({
                     const on = resp.includes(k);
                     return (
                       <button key={k} type="button" className={`pill${on ? " inv" : ""}`} style={{ border: 0, cursor: "pointer" }} aria-pressed={on}
-                        onClick={() => setResp(on ? resp.filter((x) => x !== k) : [...resp, k])}>
+                        onClick={() => { setMexeuResp(true); setResp(on ? resp.filter((x) => x !== k) : [...resp, k]); }}>
                         {p.nome}{p.grupo !== "equipe" && p.empresa ? ` · ${p.empresa}` : ""}
                       </button>
                     );
