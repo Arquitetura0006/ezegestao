@@ -26,6 +26,7 @@ export const I = {
   financeiro: <path d="M3 6h18v12H3zM3 10h18M7 15h3" />,
   cadastros: <path d="M4 6c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3zM4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3" />,
   modelo: <path d="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6" />,
+  coord: <path d="M12 3l8 4.5v9L12 21l-8-4.5v-9zM12 12l8-4.5M12 12v9M12 12L4 7.5" />,
 };
 
 export function Ic({ d }: { d: React.ReactNode }) {
@@ -76,6 +77,7 @@ export default function Shell({ ctx, children }: { ctx: Ctx; children: React.Rea
     { href: "/equipe", t: "Equipe", ic: I.equipe },
     ...(pode("comercial") ? [{ href: "/comercial", t: "Comercial", ic: I.comercial }] : []),
     { href: "/projetos", t: "Projetos", ic: I.projetos },
+    { href: "/c", t: "Coordenação", ic: I.coord },
     { href: "/tarefas", t: "Planejamento", ic: I.tarefas },
     { href: "/horas", t: "Horas", ic: I.horas },
     ...(pode("financeiro") ? [{ href: "/financeiro", t: "Financeiro", ic: I.financeiro }] : []),

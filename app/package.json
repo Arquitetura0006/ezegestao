@@ -6,19 +6,27 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "postinstall": "node scripts/copiar-bim.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.45.4",
+    "@thatopen/components": "3.6.0",
+    "@thatopen/fragments": "3.6.0",
+    "@xyflow/react": "12.12.1",
+    "html-to-image": "1.11.13",
     "next": "14.2.15",
     "react": "^18",
-    "react-dom": "^18"
+    "react-dom": "^18",
+    "three": "0.187.0",
+    "web-ifc": "0.0.77"
   },
   "devDependencies": {
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "@types/three": "^0.187.0",
     "eslint": "^8",
     "eslint-config-next": "14.2.15",
     "typescript": "^5"
