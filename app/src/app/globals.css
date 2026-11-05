@@ -640,11 +640,6 @@ input[type=search]:focus { border-color: var(--fg); outline: none; }
 }
 .og-selo { position: absolute; top: -10px; right: 10px; z-index: 2; padding: 1px 7px; border-radius: 5px; font-size: 9.5px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; line-height: 16px; white-space: nowrap; background: #fff; color: #16181d; border: 1.5px solid #16181d; }
 .og-legenda .og-selo, .og-leg-ed .og-selo { position: static; flex: none; }
-.og-s-cheio { background: #16181d; color: #fff; border-color: #16181d; }
-.og-s-contorno { background: #fff; }
-.og-s-tracejado { background: #fff; border-style: dashed; }
-.og-s-cinza { background: #d4d6da; border-color: #d4d6da; }
-.og-card.og-esc .og-s-cheio { background: #fff; color: #16181d; border-color: #fff; }
 .og-legenda { background: rgba(255,255,255,.96); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; box-shadow: 0 1px 4px rgba(16,24,40,.1); min-width: 220px; }
 .og-leg-i { display: flex; align-items: center; gap: 8px; font-size: 12.5px; padding: 3px 0; }
 .og-leg-i span:not(.og-selo) { flex: 1; }
@@ -653,3 +648,10 @@ input[type=search]:focus { border-color: var(--fg); outline: none; }
 .og-leg-ed input[type=text] { flex: 1; min-width: 0; padding: 8px 10px; }
 .og-leg-ed select.f { flex: none; }
 @media (max-width: 640px) { .og-leg-ed { flex-wrap: wrap; } }
+.og-card .og-selo { box-shadow: 0 0 0 2px #fff; }
+.og-cor { position: relative; flex: none; }
+.og-cor-b { width: 30px; height: 30px; border-radius: 8px; border: 2px solid #fff; box-shadow: 0 0 0 1px var(--ctl); cursor: pointer; padding: 0; }
+.og-cor-p { position: absolute; right: 0; top: 36px; z-index: 5; display: grid; grid-template-columns: repeat(3, 28px); gap: 6px; padding: 8px; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 8px 24px rgba(16,24,40,.15); }
+.og-cor-p button { width: 28px; height: 28px; border-radius: 7px; border: 2px solid #fff; box-shadow: 0 0 0 1px var(--ctl); cursor: pointer; padding: 0; }
+.og-cor-p button.on { box-shadow: 0 0 0 2px var(--fg); }
+.og-cor-p input[type=color] { width: 28px; height: 28px; padding: 0; border: 0; background: none; cursor: pointer; }

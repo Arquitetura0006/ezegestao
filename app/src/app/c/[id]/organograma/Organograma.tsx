@@ -12,7 +12,7 @@ import { toPng } from "html-to-image";
 import { supabaseNavegador } from "@/lib/supabase/client";
 import { FUNCAO, type Funcao, type Pessoa, type ProjetoCoord } from "@/lib/coord";
 import {
-  ESTILO_SELO, FORMA, MODELOS, PAPEL, TIPO_NO, VINCULO, novoId, soEstrutura,
+  CORES, ESTILO_SELO, FORMA, MODELOS, seloCss, PAPEL, TIPO_NO, VINCULO, novoId, soEstrutura,
   type Contratacao, type EstiloSelo, type DadosNo, type DadosVinculo, type Forma, type NoSalvo, type Papel, type TipoNo, type TipoVinculo, type VinculoSalvo,
 } from "@/lib/organograma";
 import { erroMsg, iniciais } from "@/lib/util";
@@ -52,7 +52,7 @@ function Pontos() {
 const Contratacoes = createContext<Contratacao[]>([]);
 
 function Selo({ c }: { c: Contratacao }) {
-  return <span className={`og-selo og-s-${c.estilo}`}>{c.sigla}</span>;
+  return <span className="og-selo" style={seloCss(c)}>{c.sigla}</span>;
 }
 
 const Card = memo(function Card({ data, type, selected }: NodeProps<No>) {
@@ -64,7 +64,7 @@ const Card = memo(function Card({ data, type, selected }: NodeProps<No>) {
     .filter(Boolean).join(" ");
   const foto = typeof data.foto === "string" ? data.foto : null;
   return (
-    <div className={cls}>
+    <div className={cls} style={contrato && !data.escuro ? { borderColor: contrato.cor, borderStyle: contrato.estilo === "tracejado" ? "dashed" : undefined } : undefined}>
       <Pontos />
       {contrato && <Selo c={contrato} />}
       {type === "pessoa" && (
@@ -124,7 +124,7 @@ function Editor({ projeto }: { projeto: ProjetoCoord }) {
       const [{ data: o }, { data: p }, { data: ct }] = await Promise.all([
         supabase.from("projeto_organogramas").select("nos,arestas").eq("projeto_id", projeto.id).maybeSingle(),
         supabase.rpc("coord_pessoas", { proj: projeto.id }),
-        supabase.from("org_contratacoes").select("id,nome,sigla,estilo,descricao,ordem,ativo").eq("escritorio_id", projeto.escritorio_id).order("ordem"),
+        supabase.from("org_contratacoes").select("id,nome,sigla,estilo,descricao,cor,ordem,ativo").eq("escritorio_id", projeto.escritorio_id).order("ordem"),
       ]);
       setPessoas((p as Pessoa[]) ?? []);
       setContratos((ct as Contratacao[]) ?? []);
@@ -275,13 +275,13 @@ function Editor({ projeto }: { projeto: ProjetoCoord }) {
       w.document.write(`<!doctype html><html><head><title>Organograma · ${projeto.nome}</title>
         <style>@page{size:A4 landscape;margin:12mm}body{font-family:Arial,sans-serif;color:#000;margin:0}
         header{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:1.5px solid #000;padding-bottom:8px;margin-bottom:10px}
-        header img{height:42px}h1{font-size:18px;margin:0}p{margin:2px 0;font-size:11px}main img{width:100%;filter:grayscale(1)}</style></head>
+        header img{height:42px}h1{font-size:18px;margin:0}p{margin:2px 0;font-size:11px}main img{width:100%}</style></head>
         <body><header><img src="${location.origin}/logo-full.png" alt="EZE"><div style="text-align:right"><h1>Organograma do projeto</h1>
         <p>${projeto.codigo ? String(projeto.codigo).padStart(3, "0") + " · " : ""}${projeto.nome}${projeto.cliente ? " · " + projeto.cliente : ""}</p><p>${hoje}</p></div></header>
         <main><img src="${png}" alt=""></main>
         ${usados.length ? `<footer style="display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:8px;font-size:11px;border-top:1px solid #000;padding-top:6px">
           <strong>Contratação:</strong>${usados.map(({ c, n }) => `<span><span style="display:inline-block;padding:1px 6px;border-radius:4px;font-weight:700;font-size:10px;${
-            c.estilo === "cheio" ? "background:#000;color:#fff" : c.estilo === "tracejado" ? "border:1px dashed #000" : c.estilo === "cinza" ? "background:#d4d6da" : "border:1px solid #000"
+            c.estilo === "cheio" ? `background:${c.cor};color:#fff;border:1px solid ${c.cor}` : c.estilo === "cinza" ? `background:${c.cor}26;color:${c.cor}` : `border:1px ${c.estilo === "tracejado" ? "dashed" : "solid"} ${c.cor};color:${c.cor}`
           }">${c.sigla}</span> ${c.nome} (${n})</span>`).join("")}</footer>` : ""}
         <script>window.onload=()=>setTimeout(()=>window.print(),300)<\/script></body></html>`);
       w.document.close();
@@ -295,7 +295,7 @@ function Editor({ projeto }: { projeto: ProjetoCoord }) {
     .filter((x) => x.n > 0);
 
   const recarregarContratos = useCallback(async () => {
-    const { data } = await supabase.from("org_contratacoes").select("id,nome,sigla,estilo,descricao,ordem,ativo").eq("escritorio_id", projeto.escritorio_id).order("ordem");
+    const { data } = await supabase.from("org_contratacoes").select("id,nome,sigla,estilo,descricao,cor,ordem,ativo").eq("escritorio_id", projeto.escritorio_id).order("ordem");
     setContratos((data as Contratacao[]) ?? []);
   }, [supabase, projeto.escritorio_id]);
 
@@ -389,7 +389,7 @@ function Editor({ projeto }: { projeto: ProjetoCoord }) {
           >
             <Background variant={BackgroundVariant.Dots} gap={20} size={1.2} color="#c9ccd1" />
             <Controls showInteractive={false} />
-            <MiniMap pannable zoomable nodeColor={(n) => ((n.data as DadosNo).escuro ? "#16181d" : "#9a9ea6")} maskColor="rgba(244,245,247,.7)" />
+            <MiniMap pannable zoomable nodeColor={(n) => contratos.find((c) => c.id === (n.data as DadosNo).contratacao)?.cor ?? ((n.data as DadosNo).escuro ? "#16181d" : "#9a9ea6")} maskColor="rgba(244,245,247,.7)" />
             {usados.length > 0 && (
               <Panel position="top-left" className="og-legenda">
                 <p className="mono" style={{ marginBottom: 6 }}>Contratação</p>
@@ -546,7 +546,7 @@ function EditarLegenda({
   escritorioId, lista, onClose, onChange, avisar,
 }: { escritorioId: string; lista: Contratacao[]; onClose: () => void; onChange: () => void; avisar: (t: string) => void }) {
   const supabase = useMemo(() => supabaseNavegador(), []);
-  const [novo, setNovo] = useState({ nome: "", sigla: "", estilo: "contorno" as EstiloSelo });
+  const [novo, setNovo] = useState({ nome: "", sigla: "", estilo: "cheio" as EstiloSelo, cor: CORES[4] });
 
   async function mudar(c: Contratacao, d: Partial<Contratacao>) {
     const { error } = await supabase.from("org_contratacoes").update(d).eq("id", c.id);
@@ -557,16 +557,16 @@ function EditarLegenda({
     e.preventDefault();
     if (!novo.nome.trim()) return;
     const { error } = await supabase.from("org_contratacoes").insert({
-      escritorio_id: escritorioId, nome: novo.nome.trim(), sigla: (novo.sigla.trim() || novo.nome.trim()).slice(0, 18), estilo: novo.estilo, ordem: lista.length + 1,
+      escritorio_id: escritorioId, nome: novo.nome.trim(), sigla: (novo.sigla.trim() || novo.nome.trim()).slice(0, 18), estilo: novo.estilo, cor: novo.cor, ordem: lista.length + 1,
     });
     if (error) return avisar(erroMsg(error));
-    setNovo({ nome: "", sigla: "", estilo: "contorno" });
+    setNovo({ nome: "", sigla: "", estilo: "cheio", cor: CORES[4] });
     onChange();
   }
 
   return (
     <div className="cd-modal-fundo" onClick={onClose} role="dialog" aria-label="Legenda de contratação">
-      <div className="box" style={{ width: "min(640px, 100%)", maxHeight: "86vh", overflow: "auto" }} onClick={(e) => e.stopPropagation()}>
+      <div className="box" style={{ width: "min(780px, 100%)", maxHeight: "86vh", overflow: "auto" }} onClick={(e) => e.stopPropagation()}>
         <div className="row" style={{ justifyContent: "space-between", marginBottom: 12 }}>
           <p className="mono">Legenda de contratação</p>
           <button type="button" className="btn small ghost" onClick={onClose}>Fechar</button>
@@ -580,22 +580,41 @@ function EditarLegenda({
               <select className="f" value={c.estilo} onChange={(e) => mudar(c, { estilo: e.target.value as EstiloSelo })} style={{ width: 130 }} aria-label="Estilo">
                 {(Object.keys(ESTILO_SELO) as EstiloSelo[]).map((k) => <option key={k} value={k}>{ESTILO_SELO[k]}</option>)}
               </select>
+              <Cor valor={c.cor} onChange={(v) => mudar(c, { cor: v })} />
               <button type="button" className="btn small ghost" onClick={() => mudar(c, { ativo: !c.ativo })}>{c.ativo ? "Desativar" : "Ativar"}</button>
             </div>
           ))}
         </div>
         <form className="og-leg-ed" style={{ marginTop: 14 }} onSubmit={criar}>
-          <Selo c={{ id: "", nome: novo.nome, sigla: novo.sigla || novo.nome || "Novo", estilo: novo.estilo, descricao: null, ordem: 0, ativo: true }} />
+          <Selo c={{ id: "", nome: novo.nome, sigla: novo.sigla || novo.nome || "Novo", estilo: novo.estilo, cor: novo.cor, descricao: null, ordem: 0, ativo: true }} />
           <input type="text" placeholder="Nova categoria (ex.: Indicação de parceiro)" value={novo.nome} onChange={(e) => setNovo({ ...novo, nome: e.target.value })} />
           <input type="text" placeholder="Selo" maxLength={18} value={novo.sigla} onChange={(e) => setNovo({ ...novo, sigla: e.target.value })} style={{ width: 120 }} />
           <select className="f" value={novo.estilo} onChange={(e) => setNovo({ ...novo, estilo: e.target.value as EstiloSelo })} style={{ width: 130 }}>
             {(Object.keys(ESTILO_SELO) as EstiloSelo[]).map((k) => <option key={k} value={k}>{ESTILO_SELO[k]}</option>)}
           </select>
+          <Cor valor={novo.cor} onChange={(v) => setNovo({ ...novo, cor: v })} />
           <button className="btn small dark" type="submit">Adicionar</button>
         </form>
-        <p className="note" style={{ margin: "10px 0 0" }}>Vale para todos os projetos do escritório. Em P&B, cada categoria se distingue pelo estilo do selo.</p>
+        <p className="note" style={{ margin: "10px 0 0" }}>Vale para todos os projetos do escritório. A cor aparece no selo e na borda do card.</p>
       </div>
     </div>
+  );
+}
+
+function Cor({ valor, onChange }: { valor: string; onChange: (v: string) => void }) {
+  const [aberto, setAberto] = useState(false);
+  return (
+    <span className="og-cor">
+      <button type="button" className="og-cor-b" style={{ background: valor }} aria-label="Cor" onClick={() => setAberto(!aberto)} />
+      {aberto && (
+        <span className="og-cor-p">
+          {CORES.map((c) => (
+            <button key={c} type="button" style={{ background: c }} aria-label={c} className={c === valor ? "on" : ""} onClick={() => { onChange(c); setAberto(false); }} />
+          ))}
+          <input type="color" value={valor} onChange={(e) => onChange(e.target.value)} aria-label="Outra cor" />
+        </span>
+      )}
+    </span>
   );
 }
 

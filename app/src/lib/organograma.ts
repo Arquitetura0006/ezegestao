@@ -24,8 +24,17 @@ export type NoSalvo = { id: string; type: TipoNo; position: { x: number; y: numb
 export type VinculoSalvo = { id: string; source: string; target: string; sourceHandle?: string | null; targetHandle?: string | null; data: DadosVinculo };
 
 export type EstiloSelo = "cheio" | "contorno" | "tracejado" | "cinza";
-export type Contratacao = { id: string; nome: string; sigla: string; estilo: EstiloSelo; descricao: string | null; ordem: number; ativo: boolean };
-export const ESTILO_SELO: Record<EstiloSelo, string> = { cheio: "Preto cheio", contorno: "Contorno", tracejado: "Tracejado", cinza: "Cinza" };
+export type Contratacao = { id: string; nome: string; sigla: string; estilo: EstiloSelo; descricao: string | null; cor: string; ordem: number; ativo: boolean };
+export const ESTILO_SELO: Record<EstiloSelo, string> = { cheio: "Cheio", contorno: "Contorno", tracejado: "Tracejado", cinza: "Suave" };
+export const CORES = ["#2563eb", "#16a34a", "#d97706", "#dc2626", "#7c3aed", "#0891b2", "#db2777", "#16181d"];
+
+// Estilo do selo a partir da cor e do estilo da categoria
+export function seloCss(c: Pick<Contratacao, "cor" | "estilo">): React.CSSProperties {
+  const cor = c.cor || "#16181d";
+  if (c.estilo === "cheio") return { background: cor, borderColor: cor, color: "#fff" };
+  if (c.estilo === "cinza") return { background: `${cor}26`, borderColor: `${cor}26`, color: cor };
+  return { background: "#fff", borderColor: cor, color: cor, borderStyle: c.estilo === "tracejado" ? "dashed" : "solid" };
+}
 
 export const TIPO_NO: Record<TipoNo, string> = { pessoa: "Pessoa", funcao: "Função", empresa: "Empresa", nota: "Nota" };
 export const PAPEL: Record<Papel, string> = { coordenacao: "Coordenação do projeto", disciplina: "Disciplina", cliente: "Cliente", outro: "Outra" };
