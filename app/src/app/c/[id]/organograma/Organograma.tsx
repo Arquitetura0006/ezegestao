@@ -141,7 +141,7 @@ function Editor({ projeto }: { projeto: ProjetoCoord }) {
         pronto.current = true;
       }, 60);
     })();
-  }, [supabase, projeto.id, setNos, setVs, rf]);
+  }, [supabase, projeto.id, projeto.escritorio_id, setNos, setVs, rf]);
 
   // Salva sozinho, um pouco depois da última mudança
   const salvar = useCallback(async (n: No[], e: Vinc[]) => {
