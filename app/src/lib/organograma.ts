@@ -15,12 +15,17 @@ export type DadosNo = {
   forma?: Forma;
   destaque?: boolean;           // borda grossa
   escuro?: boolean;             // preenchido em preto
+  contratacao?: string | null;  // id em org_contratacoes (legenda do card)
   [k: string]: unknown;
 };
 export type DadosVinculo = { tipo: TipoVinculo; rotulo?: string; [k: string]: unknown };
 
 export type NoSalvo = { id: string; type: TipoNo; position: { x: number; y: number }; data: DadosNo; width?: number; height?: number };
 export type VinculoSalvo = { id: string; source: string; target: string; sourceHandle?: string | null; targetHandle?: string | null; data: DadosVinculo };
+
+export type EstiloSelo = "cheio" | "contorno" | "tracejado" | "cinza";
+export type Contratacao = { id: string; nome: string; sigla: string; estilo: EstiloSelo; descricao: string | null; ordem: number; ativo: boolean };
+export const ESTILO_SELO: Record<EstiloSelo, string> = { cheio: "Preto cheio", contorno: "Contorno", tracejado: "Tracejado", cinza: "Cinza" };
 
 export const TIPO_NO: Record<TipoNo, string> = { pessoa: "Pessoa", funcao: "Função", empresa: "Empresa", nota: "Nota" };
 export const PAPEL: Record<Papel, string> = { coordenacao: "Coordenação do projeto", disciplina: "Disciplina", cliente: "Cliente", outro: "Outra" };

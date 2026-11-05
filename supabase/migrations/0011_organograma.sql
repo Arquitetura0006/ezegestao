@@ -104,4 +104,40 @@ begin
 end $$;
 grant execute on function public.organogramas_disponiveis(uuid), public.organograma_de(uuid, uuid) to authenticated;
 
+-- =========================================================
+-- Contratação (legenda dos cards): quem contratou ou responde por cada pessoa/empresa
+-- Editável por escritório. Estilo em P&B: cheio | contorno | tracejado | cinza
+-- =========================================================
+create table if not exists public.org_contratacoes (
+  id uuid primary key default gen_random_uuid(),
+  escritorio_id uuid not null references public.escritorios(id) on delete cascade,
+  nome text not null,                 -- ex.: Contratado pelo cliente
+  sigla text not null,                -- texto curto no selo do card
+  estilo text not null default 'contorno' check (estilo in ('cheio','contorno','tracejado','cinza')),
+  descricao text,
+  ordem int not null default 0,
+  ativo boolean not null default true,
+  unique (escritorio_id, nome)
+);
+alter table public.org_contratacoes enable row level security;
+drop policy if exists orgc_ler on public.org_contratacoes;
+create policy orgc_ler on public.org_contratacoes for select to authenticated
+  using (eh_membro(escritorio_id)
+         or exists (select 1 from coord_convidados c where c.escritorio_id = org_contratacoes.escritorio_id and c.perfil_id = auth.uid() and c.ativo));
+drop policy if exists orgc_edit on public.org_contratacoes;
+create policy orgc_edit on public.org_contratacoes for all to authenticated
+  using (pode(escritorio_id, 'projetos', true)) with check (pode(escritorio_id, 'projetos', true));
+grant select, insert, update, delete on public.org_contratacoes to authenticated;
+
+insert into public.org_contratacoes (escritorio_id, nome, sigla, estilo, descricao, ordem)
+select e.id, t.nome, t.sigla, t.estilo, t.descricao, t.ordem
+  from public.escritorios e
+  cross join (values
+    ('Contratado pelo cliente', 'Cliente', 'contorno', 'Contrato direto entre o cliente e o profissional', 1),
+    ('Contratado EZE Gestão', 'EZE Gestão', 'cheio', 'Serviço vendido pela EZE: a EZE gerencia e responde pela entrega', 2),
+    ('Orçamento EZE Gestão', 'Orçamento', 'tracejado', 'Proposta da EZE em negociação com o cliente', 3),
+    ('Equipe interna EZE', 'Interna', 'cinza', 'Profissional da equipe EZE', 4)
+  ) as t(nome, sigla, estilo, descricao, ordem)
+on conflict (escritorio_id, nome) do nothing;
+
 select 'ok' as resultado;

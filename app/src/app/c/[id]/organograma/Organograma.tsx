@@ -2,9 +2,9 @@
 
 import "@xyflow/react/dist/style.css";
 import Link from "next/link";
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createContext, memo, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import {
-  Background, BackgroundVariant, ConnectionMode, Controls, Handle, MarkerType, MiniMap, Position, ReactFlow, ReactFlowProvider,
+  Background, BackgroundVariant, ConnectionMode, Controls, Handle, MarkerType, MiniMap, Panel, Position, ReactFlow, ReactFlowProvider,
   addEdge, getNodesBounds, getViewportForBounds, useEdgesState, useNodesState, useReactFlow,
   type Connection, type Edge, type Node, type NodeProps,
 } from "@xyflow/react";
@@ -12,8 +12,8 @@ import { toPng } from "html-to-image";
 import { supabaseNavegador } from "@/lib/supabase/client";
 import { FUNCAO, type Funcao, type Pessoa, type ProjetoCoord } from "@/lib/coord";
 import {
-  FORMA, MODELOS, PAPEL, TIPO_NO, VINCULO, novoId, soEstrutura,
-  type DadosNo, type DadosVinculo, type Forma, type NoSalvo, type Papel, type TipoNo, type TipoVinculo, type VinculoSalvo,
+  ESTILO_SELO, FORMA, MODELOS, PAPEL, TIPO_NO, VINCULO, novoId, soEstrutura,
+  type Contratacao, type EstiloSelo, type DadosNo, type DadosVinculo, type Forma, type NoSalvo, type Papel, type TipoNo, type TipoVinculo, type VinculoSalvo,
 } from "@/lib/organograma";
 import { erroMsg, iniciais } from "@/lib/util";
 
@@ -49,7 +49,15 @@ function Pontos() {
   );
 }
 
+const Contratacoes = createContext<Contratacao[]>([]);
+
+function Selo({ c }: { c: Contratacao }) {
+  return <span className={`og-selo og-s-${c.estilo}`}>{c.sigla}</span>;
+}
+
 const Card = memo(function Card({ data, type, selected }: NodeProps<No>) {
+  const lista = useContext(Contratacoes);
+  const contrato = data.contratacao ? lista.find((c) => c.id === data.contratacao) : undefined;
   const forma: Forma = data.forma ?? (type === "pessoa" ? "redondo" : type === "nota" ? "reto" : "arredondado");
   const vaga = type === "pessoa" && !data.perfil_id && !data.convidado_id;
   const cls = ["og-card", `og-${type}`, `og-f-${forma}`, data.destaque ? "og-dest" : "", data.escuro ? "og-esc" : "", vaga ? "og-vaga" : "", selected ? "og-sel" : ""]
@@ -58,6 +66,7 @@ const Card = memo(function Card({ data, type, selected }: NodeProps<No>) {
   return (
     <div className={cls}>
       <Pontos />
+      {contrato && <Selo c={contrato} />}
       {type === "pessoa" && (
         <span className="og-av">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -94,6 +103,8 @@ function Editor({ projeto }: { projeto: ProjetoCoord }) {
   const [carregado, setCarregado] = useState(false);
   const [vazio, setVazio] = useState(false);
   const [pessoas, setPessoas] = useState<Pessoa[]>([]);
+  const [contratos, setContratos] = useState<Contratacao[]>([]);
+  const [legendaEd, setLegendaEd] = useState(false);
   const [estado, setEstado] = useState<"" | "salvando" | "salvo" | "erro">("");
   const [aviso, setAviso] = useState("");
   const [tipoVinc, setTipoVinc] = useState<TipoVinculo>("subordinacao");
@@ -110,11 +121,13 @@ function Editor({ projeto }: { projeto: ProjetoCoord }) {
 
   useEffect(() => {
     (async () => {
-      const [{ data: o }, { data: p }] = await Promise.all([
+      const [{ data: o }, { data: p }, { data: ct }] = await Promise.all([
         supabase.from("projeto_organogramas").select("nos,arestas").eq("projeto_id", projeto.id).maybeSingle(),
         supabase.rpc("coord_pessoas", { proj: projeto.id }),
+        supabase.from("org_contratacoes").select("id,nome,sigla,estilo,descricao,ordem,ativo").eq("escritorio_id", projeto.escritorio_id).order("ordem"),
       ]);
       setPessoas((p as Pessoa[]) ?? []);
+      setContratos((ct as Contratacao[]) ?? []);
       const salvo = o as { nos: NoSalvo[]; arestas: VinculoSalvo[] } | null;
       if (salvo && salvo.nos.length) {
         const d = deSalvo(salvo.nos, salvo.arestas);
@@ -265,12 +278,26 @@ function Editor({ projeto }: { projeto: ProjetoCoord }) {
         header img{height:42px}h1{font-size:18px;margin:0}p{margin:2px 0;font-size:11px}main img{width:100%;filter:grayscale(1)}</style></head>
         <body><header><img src="${location.origin}/logo-full.png" alt="EZE"><div style="text-align:right"><h1>Organograma do projeto</h1>
         <p>${projeto.codigo ? String(projeto.codigo).padStart(3, "0") + " · " : ""}${projeto.nome}${projeto.cliente ? " · " + projeto.cliente : ""}</p><p>${hoje}</p></div></header>
-        <main><img src="${png}" alt=""></main><script>window.onload=()=>setTimeout(()=>window.print(),300)<\/script></body></html>`);
+        <main><img src="${png}" alt=""></main>
+        ${usados.length ? `<footer style="display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:8px;font-size:11px;border-top:1px solid #000;padding-top:6px">
+          <strong>Contratação:</strong>${usados.map(({ c, n }) => `<span><span style="display:inline-block;padding:1px 6px;border-radius:4px;font-weight:700;font-size:10px;${
+            c.estilo === "cheio" ? "background:#000;color:#fff" : c.estilo === "tracejado" ? "border:1px dashed #000" : c.estilo === "cinza" ? "background:#d4d6da" : "border:1px solid #000"
+          }">${c.sigla}</span> ${c.nome} (${n})</span>`).join("")}</footer>` : ""}
+        <script>window.onload=()=>setTimeout(()=>window.print(),300)<\/script></body></html>`);
       w.document.close();
     } catch (e) {
       avisar(`Não foi possível gerar a imagem: ${erroMsg(e)}`);
     }
   }
+
+  const usados = contratos
+    .map((c) => ({ c, n: nos.filter((x) => x.data.contratacao === c.id).length }))
+    .filter((x) => x.n > 0);
+
+  const recarregarContratos = useCallback(async () => {
+    const { data } = await supabase.from("org_contratacoes").select("id,nome,sigla,estilo,descricao,ordem,ativo").eq("escritorio_id", projeto.escritorio_id).order("ordem");
+    setContratos((data as Contratacao[]) ?? []);
+  }, [supabase, projeto.escritorio_id]);
 
   const opcoesPessoa = [
     { t: "Equipe", l: pessoas.filter((p) => p.grupo === "equipe") },
@@ -340,6 +367,7 @@ function Editor({ projeto }: { projeto: ProjetoCoord }) {
         )}
 
         <section className="og-quadro" ref={quadro}>
+          <Contratacoes.Provider value={contratos}>
           <ReactFlow<No, Vinc>
             nodes={nos}
             edges={vs}
@@ -362,7 +390,21 @@ function Editor({ projeto }: { projeto: ProjetoCoord }) {
             <Background variant={BackgroundVariant.Dots} gap={20} size={1.2} color="#c9ccd1" />
             <Controls showInteractive={false} />
             <MiniMap pannable zoomable nodeColor={(n) => ((n.data as DadosNo).escuro ? "#16181d" : "#9a9ea6")} maskColor="rgba(244,245,247,.7)" />
+            {usados.length > 0 && (
+              <Panel position="top-left" className="og-legenda">
+                <p className="mono" style={{ marginBottom: 6 }}>Contratação</p>
+                {usados.map(({ c, n }) => (
+                  <div key={c.id} className="og-leg-i" title={c.descricao ?? ""}>
+                    <Selo c={c} />
+                    <span>{c.nome}</span>
+                    <b>{n}</b>
+                  </div>
+                ))}
+                {pode && <button type="button" className="linkbtn note" style={{ fontSize: 12, marginTop: 4 }} onClick={() => setLegendaEd(true)}>Editar legenda</button>}
+              </Panel>
+            )}
           </ReactFlow>
+          </Contratacoes.Provider>
 
           {carregado && vazio && pode && (
             <div className="cd-msg">
@@ -425,6 +467,15 @@ function Editor({ projeto }: { projeto: ProjetoCoord }) {
                       {selNo.data.papel === "disciplina" && <p className="note" style={{ margin: 0 }}>As pessoas ligadas a este card são sugeridas como responsáveis nos apontamentos desta disciplina.</p>}
                     </>
                   )}
+                  {selNo.type !== "nota" && (
+                    <div className="form-l"><span>Contratação</span>
+                      <select className="f" aria-label="Contratação" value={selNo.data.contratacao ?? ""} onChange={(e) => mudarNo(selNo.id, { contratacao: e.target.value || null })}>
+                        <option value="">Sem indicação</option>
+                        {contratos.filter((c) => c.ativo || c.id === selNo.data.contratacao).map((c) => <option key={c.id} value={c.id}>{c.nome}</option>)}
+                      </select>
+                      <button type="button" className="linkbtn note" style={{ fontSize: 12.5, alignSelf: "flex-start" }} onClick={() => setLegendaEd(true)}>Editar legenda</button>
+                    </div>
+                  )}
                   <div className="form-l"><span>Formato</span>
                     <div className="row" style={{ gap: 6 }}>
                       {(Object.keys(FORMA) as Forma[]).map((f) => (
@@ -485,7 +536,65 @@ function Editor({ projeto }: { projeto: ProjetoCoord }) {
           </div>
         </div>
       )}
+      {legendaEd && <EditarLegenda escritorioId={projeto.escritorio_id} lista={contratos} onClose={() => setLegendaEd(false)} onChange={recarregarContratos} avisar={avisar} />}
       {aviso && <div className="toast" role="status">{aviso}</div>}
+    </div>
+  );
+}
+
+function EditarLegenda({
+  escritorioId, lista, onClose, onChange, avisar,
+}: { escritorioId: string; lista: Contratacao[]; onClose: () => void; onChange: () => void; avisar: (t: string) => void }) {
+  const supabase = useMemo(() => supabaseNavegador(), []);
+  const [novo, setNovo] = useState({ nome: "", sigla: "", estilo: "contorno" as EstiloSelo });
+
+  async function mudar(c: Contratacao, d: Partial<Contratacao>) {
+    const { error } = await supabase.from("org_contratacoes").update(d).eq("id", c.id);
+    if (error) return avisar(erroMsg(error));
+    onChange();
+  }
+  async function criar(e: React.FormEvent) {
+    e.preventDefault();
+    if (!novo.nome.trim()) return;
+    const { error } = await supabase.from("org_contratacoes").insert({
+      escritorio_id: escritorioId, nome: novo.nome.trim(), sigla: (novo.sigla.trim() || novo.nome.trim()).slice(0, 18), estilo: novo.estilo, ordem: lista.length + 1,
+    });
+    if (error) return avisar(erroMsg(error));
+    setNovo({ nome: "", sigla: "", estilo: "contorno" });
+    onChange();
+  }
+
+  return (
+    <div className="cd-modal-fundo" onClick={onClose} role="dialog" aria-label="Legenda de contratação">
+      <div className="box" style={{ width: "min(640px, 100%)", maxHeight: "86vh", overflow: "auto" }} onClick={(e) => e.stopPropagation()}>
+        <div className="row" style={{ justifyContent: "space-between", marginBottom: 12 }}>
+          <p className="mono">Legenda de contratação</p>
+          <button type="button" className="btn small ghost" onClick={onClose}>Fechar</button>
+        </div>
+        <div className="stack" style={{ gap: 8 }}>
+          {lista.map((c) => (
+            <div key={c.id} className="og-leg-ed" style={{ opacity: c.ativo ? 1 : 0.5 }}>
+              <Selo c={c} />
+              <input type="text" defaultValue={c.nome} onBlur={(e) => e.target.value.trim() && e.target.value !== c.nome && mudar(c, { nome: e.target.value.trim() })} aria-label="Nome" />
+              <input type="text" defaultValue={c.sigla} maxLength={18} onBlur={(e) => e.target.value.trim() && e.target.value !== c.sigla && mudar(c, { sigla: e.target.value.trim() })} aria-label="Texto do selo" style={{ width: 120 }} />
+              <select className="f" value={c.estilo} onChange={(e) => mudar(c, { estilo: e.target.value as EstiloSelo })} style={{ width: 130 }} aria-label="Estilo">
+                {(Object.keys(ESTILO_SELO) as EstiloSelo[]).map((k) => <option key={k} value={k}>{ESTILO_SELO[k]}</option>)}
+              </select>
+              <button type="button" className="btn small ghost" onClick={() => mudar(c, { ativo: !c.ativo })}>{c.ativo ? "Desativar" : "Ativar"}</button>
+            </div>
+          ))}
+        </div>
+        <form className="og-leg-ed" style={{ marginTop: 14 }} onSubmit={criar}>
+          <Selo c={{ id: "", nome: novo.nome, sigla: novo.sigla || novo.nome || "Novo", estilo: novo.estilo, descricao: null, ordem: 0, ativo: true }} />
+          <input type="text" placeholder="Nova categoria (ex.: Indicação de parceiro)" value={novo.nome} onChange={(e) => setNovo({ ...novo, nome: e.target.value })} />
+          <input type="text" placeholder="Selo" maxLength={18} value={novo.sigla} onChange={(e) => setNovo({ ...novo, sigla: e.target.value })} style={{ width: 120 }} />
+          <select className="f" value={novo.estilo} onChange={(e) => setNovo({ ...novo, estilo: e.target.value as EstiloSelo })} style={{ width: 130 }}>
+            {(Object.keys(ESTILO_SELO) as EstiloSelo[]).map((k) => <option key={k} value={k}>{ESTILO_SELO[k]}</option>)}
+          </select>
+          <button className="btn small dark" type="submit">Adicionar</button>
+        </form>
+        <p className="note" style={{ margin: "10px 0 0" }}>Vale para todos os projetos do escritório. Em P&B, cada categoria se distingue pelo estilo do selo.</p>
+      </div>
     </div>
   );
 }
