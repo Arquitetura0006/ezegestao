@@ -8,7 +8,8 @@ import { useApp, usePode } from "../../ctx";
 import { Cabeca, Vazio } from "../../ui";
 import { nomeProjeto } from "@/lib/gestor";
 import { dataHora, erroMsg } from "@/lib/util";
-import { CAMADA_NOME, DECISAO_NOME, ITEM_STATUS, tamanho, type Analise, type Decisao, type Parecer } from "@/lib/analistas";
+import { CAMADA_NOME, CAUSA, DECISAO_NOME, ITEM_STATUS, STATUS_OBJETIVO, tamanho, type Analise, type Decisao, type Parecer, type ParecerCliente, type StatusObjetivo } from "@/lib/analistas";
+import { PRIORIDADE } from "@/lib/briefing";
 import { AbasAnalise, Nota, SeloDecisao, SeloItem, SeloStatus } from "../comum";
 
 type Det = Analise & {
@@ -138,7 +139,7 @@ export default function AnalisePg({ params }: { params: { id: string } }) {
 
       <div className="ia-det no-print">
         <div className="stack" style={{ gap: 16, minWidth: 0 }}>
-          {p && <Parecer p={p} nota={a.nota} />}
+          {p && <Parecer p={p} nota={a.nota} notaCliente={a.nota_cliente} projetoId={a.projeto_id} versao={a.briefing?.versao ?? null} />}
           {!p && !rodando && a.status !== "erro" && <Vazio titulo="Sem parecer ainda" />}
         </div>
 
@@ -201,16 +202,75 @@ export default function AnalisePg({ params }: { params: { id: string } }) {
   );
 }
 
-function Parecer({ p, nota }: { p: Parecer; nota: number | null }) {
+const SELO_OBJ: Record<StatusObjetivo, string> = { atendido: "pill ia-contorno", parcial: "pill dash", nao_atendido: "pill inv", nao_avaliavel: "pill" };
+const ORD_OBJ: Record<StatusObjetivo, number> = { nao_atendido: 0, parcial: 1, atendido: 2, nao_avaliavel: 3 };
+
+function Cliente({ c, nota, versao }: { c: ParecerCliente; nota: number | null; versao: number | null }) {
+  return (
+    <section className="box stack ia-cliente">
+      <div className="row" style={{ justifyContent: "space-between" }}>
+        <div>
+          <p className="mono" style={{ marginBottom: 4 }}>Camada 0 · Cliente{versao ? ` · briefing versão ${versao}` : ""}</p>
+          <p className="sec-t" style={{ margin: 0 }}>Aderência aos objetivos do cliente</p>
+        </div>
+        {nota !== null && <Nota v={nota} grande />}
+      </div>
+      <p style={{ margin: 0, whiteSpace: "pre-wrap" }}>{c.resumo}</p>
+      <div className="tabela-w" style={{ boxShadow: "none" }}>
+        <table className="tabela">
+          <thead><tr><th style={{ width: 120 }}>Status</th><th>Objetivo</th><th style={{ width: 70 }}>Nota</th><th>Por quê</th></tr></thead>
+          <tbody>
+            {[...(c.objetivos ?? [])].sort((x, y) => ORD_OBJ[x.status] - ORD_OBJ[y.status]).map((o, i) => (
+              <tr key={i}>
+                <td><span className={SELO_OBJ[o.status] ?? "pill"}>{STATUS_OBJETIVO[o.status] ?? o.status}</span></td>
+                <td>{o.objetivo}{o.prioridade && <small className="note"> · {PRIORIDADE[o.prioridade]}</small>}</td>
+                <td><strong>{Number(o.nota).toFixed(1).replace(".", ",")}</strong></td>
+                <td className="note">
+                  {o.justificativa}
+                  {o.causa && <><br /><strong>Causa:</strong> {CAUSA[o.causa] ?? o.causa}</>}
+                  {o.sugestao && <><br /><strong>Caminho:</strong> {o.sugestao}</>}
+                  {o.onde && <><br /><em>{o.onde}</em></>}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {(c.gosta || !!c.alertas_nao_gosta?.length) && (
+        <div className="grid2">
+          {c.gosta && <div><p className="sec-t">O que o cliente gosta</p><p className="note" style={{ margin: 0 }}>{c.gosta}</p></div>}
+          {!!c.alertas_nao_gosta?.length && (
+            <div><p className="sec-t">Contra o que o cliente não gosta</p><ul className="ia-ul">{c.alertas_nao_gosta.map((x, i) => <li key={i}>{x}</li>)}</ul></div>
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function Parecer({ p, nota, notaCliente, projetoId, versao }: { p: Parecer; nota: number | null; notaCliente: number | null; projetoId: string | null; versao: number | null }) {
   return (
     <>
+      {p.sem_briefing && (
+        <section className="box" style={{ borderColor: "var(--fg)" }}>
+          <p style={{ margin: 0, fontWeight: 600 }}>Projeto sem briefing.</p>
+          <p className="note" style={{ margin: "4px 0 0" }}>
+            A análise não sabe se o projeto atende ao cliente. Preencha os objetivos no <Link href={`/projetos/${projetoId}/briefing`}>briefing do projeto</Link> e analise de novo.
+          </p>
+        </section>
+      )}
       <section className="box stack">
         <div className="row" style={{ justifyContent: "space-between", alignItems: "flex-start" }}>
           <p className="sec-t" style={{ margin: 0 }}>Resumo</p>
-          {nota !== null && <span className="row" style={{ gap: 8 }}><span className="note">Estética</span><Nota v={nota} grande /></span>}
+          <span className="row" style={{ gap: 16 }}>
+            {notaCliente !== null && <span className="row" style={{ gap: 8 }}><span className="note">Cliente</span><Nota v={notaCliente} grande /></span>}
+            {nota !== null && <span className="row" style={{ gap: 8 }}><span className="note">Estética</span><Nota v={nota} grande /></span>}
+          </span>
         </div>
         <p style={{ margin: 0, whiteSpace: "pre-wrap" }}>{p.resumo}</p>
       </section>
+
+      {p.cliente && <Cliente c={p.cliente} nota={notaCliente} versao={versao} />}
 
       {!!p.correcoes_prioritarias?.length && (
         <section className="box stack">
@@ -321,7 +381,7 @@ function Impressao({ a, p, proj }: { a: Det; p: Parecer; proj: string | null }) 
         </div>
       </header>
       <h1>{a.titulo}</h1>
-      <p className="doc-data">{[proj, a.etapa_sigla, a.cidade, dataHora(a.concluida_em || a.created_at)].filter(Boolean).join(" · ")}{a.nota !== null ? ` · Estética ${a.nota.toFixed(1).replace(".", ",")}` : ""}</p>
+      <p className="doc-data">{[proj, a.etapa_sigla, a.cidade, dataHora(a.concluida_em || a.created_at)].filter(Boolean).join(" · ")}{a.nota_cliente !== null ? ` · Cliente ${a.nota_cliente.toFixed(1).replace(".", ",")}` : ""}{a.nota !== null ? ` · Estética ${a.nota.toFixed(1).replace(".", ",")}` : ""}</p>
       {a.decisao && (
         <>
           <h2>Decisão do responsável</h2>
@@ -330,6 +390,24 @@ function Impressao({ a, p, proj }: { a: Det; p: Parecer; proj: string | null }) 
       )}
       <h2>Resumo</h2>
       <p className="doc-txt">{p.resumo}</p>
+      {p.sem_briefing && <p className="doc-txt"><strong>Projeto sem briefing:</strong> não foi avaliada a aderência aos objetivos do cliente.</p>}
+      {p.cliente && (
+        <>
+          <h2>Cliente · aderência aos objetivos{a.nota_cliente !== null ? ` · ${a.nota_cliente.toFixed(1).replace(".", ",")}` : ""}</h2>
+          <p className="doc-txt">{p.cliente.resumo}</p>
+          <table className="doc-tab">
+            <tbody>
+              {(p.cliente.objetivos ?? []).map((o, i) => (
+                <tr key={i}>
+                  <th>{STATUS_OBJETIVO[o.status] ?? o.status} · {Number(o.nota).toFixed(1).replace(".", ",")}</th>
+                  <td>{o.objetivo}{o.prioridade ? ` (${PRIORIDADE[o.prioridade]})` : ""} — {o.justificativa}{o.causa ? ` Causa: ${CAUSA[o.causa]}.` : ""}{o.sugestao ? ` Caminho: ${o.sugestao}` : ""}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {!!p.cliente.alertas_nao_gosta?.length && <p className="doc-txt"><strong>Contra o que o cliente não gosta:</strong> {p.cliente.alertas_nao_gosta.join("; ")}</p>}
+        </>
+      )}
       {!!p.correcoes_prioritarias?.length && (
         <>
           <h2>Correções prioritárias</h2>

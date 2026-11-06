@@ -688,3 +688,17 @@ input[type=search]:focus { border-color: var(--fg); outline: none; }
 .ia-novo { display: grid; grid-template-columns: 160px 1fr 1fr 130px auto; gap: 8px; align-items: center; }
 @media (max-width: 860px) { .ia-novo { grid-template-columns: 1fr; } }
 .ia-nova { align-items: start; }
+
+/* ===== Briefing do projeto ===== */
+.br-grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.br-ref { margin: 0; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--bg); display: flex; flex-direction: column; }
+.br-ref.t-nao_gosta { border-color: var(--fg); }
+.br-mini { display: flex; align-items: center; justify-content: center; aspect-ratio: 4 / 3; background: var(--soft); color: var(--muted); font-size: 12px; font-weight: 700; text-decoration: none; }
+.br-mini img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.br-ref figcaption { padding: 8px 10px 10px; display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+.br-ref figcaption .pill { align-self: flex-start; }
+.br-ref figcaption small { color: var(--muted); }
+.br-link { background: #fafafb; border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+.br-cli { max-width: 760px; }
+.br-cab img { height: 34px; width: auto; }
+.ia-cliente { border-color: var(--fg); }

@@ -72,8 +72,32 @@ export const DECISAO_NOME: Record<Decisao, string> = { aprovado: "Aprovado", cor
 export type ItemStatus = "conforme" | "nao_conforme" | "verificar" | "nao_se_aplica";
 export const ITEM_STATUS: Record<ItemStatus, string> = { conforme: "Conforme", nao_conforme: "Não conforme", verificar: "Verificar", nao_se_aplica: "Não se aplica" };
 
+export type StatusObjetivo = "atendido" | "parcial" | "nao_atendido" | "nao_avaliavel";
+export const STATUS_OBJETIVO: Record<StatusObjetivo, string> = { atendido: "Atendido", parcial: "Parcial", nao_atendido: "Não atendido", nao_avaliavel: "Não avaliável" };
+export type Causa = "legislacao" | "tecnica" | "projeto" | "informacao";
+export const CAUSA: Record<Causa, string> = { legislacao: "Limite da legislação", tecnica: "Limite técnico", projeto: "Escolha de projeto", informacao: "Falta informação" };
+
+export type ParecerCliente = {
+  resumo: string;
+  objetivos: {
+    objetivo_id?: string;
+    objetivo: string;
+    prioridade?: "essencial" | "importante" | "desejavel";
+    status: StatusObjetivo;
+    nota: number;
+    justificativa: string;
+    causa?: Causa;
+    sugestao?: string;
+    onde?: string;
+  }[];
+  gosta?: string;
+  alertas_nao_gosta?: string[];
+};
+
 export type Parecer = {
   resumo: string;
+  cliente?: ParecerCliente;
+  sem_briefing?: boolean;
   camadas: {
     analista_id: string;
     analista: string;
@@ -103,6 +127,8 @@ export type Analise = {
   status: Status;
   resultado: Parecer | null;
   nota: number | null;
+  nota_cliente: number | null;
+  briefing: { versao: number } | null;
   modelo: string | null;
   uso: { entrada?: number; saida?: number; cache_lida?: number; cache_criada?: number } | null;
   erro: string | null;

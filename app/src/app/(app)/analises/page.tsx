@@ -11,7 +11,7 @@ import { dataHora } from "@/lib/util";
 import type { Analise } from "@/lib/analistas";
 import { AbasAnalise, Nota, SeloDecisao, SeloStatus } from "./comum";
 
-type Linha = Pick<Analise, "id" | "titulo" | "etapa_sigla" | "cidade" | "status" | "nota" | "decisao" | "created_at" | "enviado_por" | "projeto_id"> & {
+type Linha = Pick<Analise, "id" | "titulo" | "etapa_sigla" | "cidade" | "status" | "nota" | "nota_cliente" | "decisao" | "created_at" | "enviado_por" | "projeto_id"> & {
   projetos: { nome: string; codigo: number | null; tipologia: string | null } | null;
   perfis: { nome: string | null } | null;
 };
@@ -28,7 +28,7 @@ export default function Analises() {
   useEffect(() => {
     supabase
       .from("analises")
-      .select("id,titulo,etapa_sigla,cidade,status,nota,decisao,created_at,enviado_por,projeto_id, projetos(nome,codigo,tipologia), perfis:enviado_por(nome)")
+      .select("id,titulo,etapa_sigla,cidade,status,nota,nota_cliente,decisao,created_at,enviado_por,projeto_id, projetos(nome,codigo,tipologia), perfis:enviado_por(nome)")
       .eq("escritorio_id", esc.id)
       .order("created_at", { ascending: false })
       .limit(300)
@@ -71,7 +71,7 @@ export default function Analises() {
         <div className="tabela-w">
           <table className="tabela">
             <thead>
-              <tr><th>Entrega</th><th>Projeto</th><th>Etapa</th><th>Status</th><th>Estética</th><th>Decisão</th><th>Enviado</th></tr>
+              <tr><th>Entrega</th><th>Projeto</th><th>Etapa</th><th>Status</th><th>Cliente</th><th>Estética</th><th>Decisão</th><th>Enviado</th></tr>
             </thead>
             <tbody>
               {vis.map((a) => (
@@ -80,6 +80,7 @@ export default function Analises() {
                   <td className="note">{a.projetos ? nomeProjeto(a.projetos) : "Sem projeto"}{a.cidade ? ` · ${a.cidade}` : ""}</td>
                   <td>{a.etapa_sigla || "—"}</td>
                   <td><SeloStatus s={a.status} /></td>
+                  <td><Nota v={a.nota_cliente} /></td>
                   <td><Nota v={a.nota} /></td>
                   <td>{a.status === "concluida" ? <SeloDecisao d={a.decisao} /> : <span className="note">—</span>}</td>
                   <td className="note">{a.perfis?.nome || "—"} · {dataHora(a.created_at)}</td>

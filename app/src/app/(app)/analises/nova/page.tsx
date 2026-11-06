@@ -43,6 +43,7 @@ function Nova() {
   const [enviando, setEnviando] = useState("");
   const [erro, setErro] = useState("");
   const [arrastando, setArrastando] = useState(false);
+  const [brief, setBrief] = useState<{ objetivos: number; versao: number | null } | null>(null);
   const arq = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -75,6 +76,16 @@ function Nova() {
     const et = etapas.find((x) => x.sigla === etapa);
     setTitulo([et?.nome, projeto?.nome].filter(Boolean).join(" – "));
   }, [etapa, projeto, etapas, tituloMexido]);
+
+  // Briefing do projeto: camada Cliente, automática
+  useEffect(() => {
+    setBrief(null);
+    if (!projetoId) return;
+    Promise.all([
+      supabase.from("briefing_objetivos").select("id", { count: "exact", head: true }).eq("projeto_id", projetoId).eq("ativo", true),
+      supabase.from("projeto_briefings").select("versao").eq("projeto_id", projetoId).maybeSingle(),
+    ]).then(([o, b]) => setBrief({ objetivos: o.count ?? 0, versao: (b.data as { versao: number } | null)?.versao ?? null }));
+  }, [supabase, projetoId]);
 
   const automaticos = useMemo(() => analistas.filter((a) => aplica(a, etapa || null, cidade || null)), [analistas, etapa, cidade]);
   useEffect(() => {
@@ -204,6 +215,18 @@ function Nova() {
             <p className="sec-t" style={{ marginBottom: 4 }}>Analistas desta análise</p>
             <p className="note" style={{ margin: 0 }}>Escolhidos pela etapa e pela cidade. Pode marcar ou desmarcar.</p>
           </div>
+          {projetoId && (
+            <div className={`ia-esc${brief?.objetivos ? " on" : ""}`} style={{ cursor: "default" }}>
+              <input type="checkbox" checked={!!brief && (brief.objetivos > 0 || brief.versao !== null)} disabled readOnly aria-label="Cliente" />
+              <span className="item-t">
+                <strong>Cliente · briefing do projeto</strong>
+                <small>
+                  {brief === null ? "Carregando…" : brief.objetivos > 0 ? `${brief.objetivos} objetivos · versão ${brief.versao ?? 1} · entra primeiro` : brief.versao !== null ? "Briefing sem objetivos listados" : "Projeto sem briefing: o parecer vai avisar"}
+                </small>
+              </span>
+              <Link className="pill" href={`/projetos/${projetoId}/briefing`} target="_blank">Abrir</Link>
+            </div>
+          )}
           {!etapa ? (
             <p className="note">Escolha a etapa para ver os analistas.</p>
           ) : analistas.length === 0 ? (

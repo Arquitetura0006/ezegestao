@@ -4,6 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabaseServidor } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { CAMADA_NOME, DOC_TIPO, ordenar, type Analise, type Analista, type Doc, type Item, type Parecer } from "@/lib/analistas";
+import { CAMPOS_CLIENTE, CAMPOS_RESP, PESO_PRIORIDADE, PRIORIDADE, REF_TIPO, type Briefing, type Objetivo, type Ref } from "@/lib/briefing";
 
 // Pré-análise com IA. A tela chama esta rota, que responde na hora (202) e segue
 // analisando em segundo plano; a tela acompanha pelo status da análise.
@@ -53,8 +54,8 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
 
 type Bloco = Record<string, unknown>;
 
-async function baixar(adm: SupabaseClient, caminho: string): Promise<{ b64: string; bytes: number }> {
-  const { data, error } = await adm.storage.from("analises").download(caminho);
+async function baixar(adm: SupabaseClient, caminho: string, bucket = "analises"): Promise<{ b64: string; bytes: number }> {
+  const { data, error } = await adm.storage.from(bucket).download(caminho);
   if (error || !data) throw new Error(`Não foi possível ler o arquivo ${caminho.split("/").pop()}.`);
   const buf = Buffer.from(await data.arrayBuffer());
   return { b64: buf.toString("base64"), bytes: buf.length };
@@ -68,7 +69,11 @@ function blocoArquivo(mime: string, b64: string, titulo: string, contexto?: stri
 }
 
 const SISTEMA = `Você é a pré-análise de projetos do escritório EZE Arquitetura e Engenharia (Bombinhas, SC), especializado em edifícios residenciais multifamiliares com fachadas criativas.
-Antes de o arquiteto responsável aprovar uma entrega, você confere o material enviado com as regras dos analistas cadastrados pelo escritório. Cada analista é uma camada: Base EZE (vale para todo projeto), Etapa (o que a etapa precisa conter), Município (legislação da cidade) e Estética (força criativa, com nota de 0 a 10 por critério).
+Antes de o arquiteto responsável aprovar uma entrega, você confere o material enviado.
+
+PRIMEIRO, O CLIENTE. Quando houver briefing do projeto, a primeira pergunta é: o projeto atende aos objetivos do cliente? Avalie cada objetivo do briefing (use o objetivo_id) com status, nota de 0 a 10 e justificativa. Quando um objetivo não for atendido ou for atendido em parte, diga a causa: limite da legislação, limite técnico, escolha de projeto ou falta de informação, e sugira um caminho. Confira também o que o cliente disse que gosta e, principalmente, se o projeto usa algo que ele disse que não gosta. Isso vai em "cliente" no parecer e pesa mais que as outras camadas: um projeto correto que não atende o cliente não está bom.
+
+DEPOIS, AS REGRAS DO ESCRITÓRIO, com os analistas cadastrados. Cada analista é uma camada: Base EZE (vale para todo projeto), Etapa (o que a etapa precisa conter), Município (legislação da cidade) e Estética (força criativa, com nota de 0 a 10 por critério).
 
 Regras:
 - Siga as orientações e o checklist de cada analista. Avalie cada item do checklist e cada critério de nota, usando o item_id informado.
@@ -85,7 +90,35 @@ const FERRAMENTA = {
   input_schema: {
     type: "object",
     properties: {
-      resumo: { type: "string", description: "Resumo geral em até 5 frases: estado da entrega e o que mais pesa." },
+      resumo: { type: "string", description: "Resumo geral em até 5 frases: se atende o cliente, estado da entrega e o que mais pesa." },
+      cliente: {
+        type: "object",
+        description: "Aderência aos objetivos do cliente. Obrigatório quando houver briefing.",
+        properties: {
+          resumo: { type: "string", description: "Em até 4 frases: o projeto responde ao que o cliente quer?" },
+          objetivos: {
+            type: "array",
+            description: "Um por objetivo do briefing, na mesma ordem",
+            items: {
+              type: "object",
+              properties: {
+                objetivo_id: { type: "string" },
+                objetivo: { type: "string" },
+                status: { type: "string", enum: ["atendido", "parcial", "nao_atendido", "nao_avaliavel"] },
+                nota: { type: "number", minimum: 0, maximum: 10 },
+                justificativa: { type: "string" },
+                causa: { type: "string", enum: ["legislacao", "tecnica", "projeto", "informacao"], description: "Quando parcial ou não atendido" },
+                sugestao: { type: "string" },
+                onde: { type: "string" },
+              },
+              required: ["objetivo", "status", "nota", "justificativa"],
+            },
+          },
+          gosta: { type: "string", description: "Como o projeto usa o que o cliente disse que gosta" },
+          alertas_nao_gosta: { type: "array", items: { type: "string" }, description: "Pontos do projeto que vão contra o que o cliente disse que não gosta" },
+        },
+        required: ["resumo", "objetivos"],
+      },
       camadas: {
         type: "array",
         items: {
@@ -162,8 +195,25 @@ async function rodar(adm: SupabaseClient, a: Analise) {
   const todos = ordenar((ans as Analista[]) ?? []);
   const comConteudo = todos.filter((x) => x.orientacoes.trim() || itens.some((i) => i.analista_id === x.id) || docs.some((d) => d.analista_id === x.id));
   const ignorados = todos.filter((x) => !comConteudo.includes(x)).map((x) => x.nome);
-  if (!comConteudo.length) throw new Error("Nenhum dos analistas escolhidos tem orientações, checklist ou documentos. Alimente pelo menos um em Analistas.");
   if (!a.arquivos?.length) throw new Error("Envie pelo menos um PDF ou imagem para analisar.");
+
+  // Briefing do projeto (camada Cliente, automática)
+  let briefing: Briefing | null = null;
+  let objetivos: Objetivo[] = [];
+  let refsB: Ref[] = [];
+  if (a.projeto_id) {
+    const [br, ob, rf] = await Promise.all([
+      adm.from("projeto_briefings").select("*").eq("projeto_id", a.projeto_id).maybeSingle(),
+      adm.from("briefing_objetivos").select("*").eq("projeto_id", a.projeto_id).eq("ativo", true).order("ordem"),
+      adm.from("briefing_refs").select("*").eq("projeto_id", a.projeto_id).eq("enviar", true).order("created_at").limit(40),
+    ]);
+    briefing = (br.data as Briefing) ?? null;
+    objetivos = (ob.data as Objetivo[]) ?? [];
+    refsB = (rf.data as Ref[]) ?? [];
+  }
+  const temTexto = (o?: Record<string, string | undefined>) => !!o && Object.values(o).some((v) => v && v.trim());
+  const temBriefing = objetivos.length > 0 || temTexto(briefing?.cliente) || temTexto(briefing?.responsavel);
+  if (!comConteudo.length && !temBriefing) throw new Error("Nenhum dos analistas escolhidos tem conteúdo e o projeto não tem briefing. Alimente um analista ou o briefing do projeto.");
 
   // Contexto do projeto
   let projeto = "";
@@ -209,9 +259,37 @@ async function rodar(adm: SupabaseClient, a: Analise) {
       conhecimento.push(blocoArquivo(d.mime!, b64, d.titulo, d.comentario || undefined));
     }
   }
-  conhecimento[conhecimento.length - 1].cache_control = { type: "ephemeral" };
+  if (conhecimento.length > 1) conhecimento[conhecimento.length - 1].cache_control = { type: "ephemeral" };
+  else conhecimento.length = 0;
 
-  // 2. Material enviado
+  // 2. Briefing do projeto
+  const blocoBriefing: Bloco[] = [];
+  if (temBriefing) {
+    const cli = CAMPOS_CLIENTE.filter((c) => briefing?.cliente?.[c.k]?.trim()).map((c) => `### ${c.t}\n${briefing!.cliente[c.k]!.trim()}`);
+    const rsp = CAMPOS_RESP.filter((c) => briefing?.responsavel?.[c.k]?.trim()).map((c) => `### ${c.t}\n${briefing!.responsavel[c.k]!.trim()}`);
+    const obj = objetivos.map((o) => `- [${o.id}] (${PRIORIDADE[o.prioridade]}) ${o.texto}`);
+    const links = refsB.filter((r) => !r.caminho && r.link).map((r) => `- ${REF_TIPO[r.tipo]} (${r.origem === "cliente" ? "cliente" : "equipe"}): ${r.link}${r.comentario ? ` — ${r.comentario}` : ""}`);
+    blocoBriefing.push({
+      type: "text",
+      text: [
+        `BRIEFING DO PROJETO (versão ${briefing?.versao ?? 1})`,
+        obj.length ? `## Objetivos do projeto (avalie cada um)\n${obj.join("\n")}` : "## Objetivos do projeto\nNenhum objetivo listado: avalie a aderência pelas orientações do cliente abaixo e diga que faltam objetivos claros.",
+        cli.length ? `## Orientações do cliente${briefing?.cliente_nome ? ` (${briefing.cliente_nome})` : ""}\n${cli.join("\n\n")}` : "",
+        rsp.length ? `## Briefing do responsável pelo projeto\n${rsp.join("\n\n")}` : "",
+        links.length ? `## Referências em link (não abertas, só o comentário)\n${links.join("\n")}` : "",
+      ].filter(Boolean).join("\n\n"),
+    });
+    for (const r of refsB.filter((x) => x.caminho && x.mime).slice(0, 20)) {
+      const { b64, bytes } = await baixar(adm, r.caminho!, "briefing");
+      total += bytes;
+      if (total > LIMITE_TOTAL) throw new Error("As referências do briefing e os arquivos somam mais de 30 MB. Desmarque algumas referências no briefing.");
+      blocoBriefing.push({ type: "text", text: `Referência do briefing — ${REF_TIPO[r.tipo]} (${r.origem === "cliente" ? "enviada pelo cliente" : "da equipe"})${r.titulo ? `: ${r.titulo}` : ""}${r.comentario ? `. Comentário: ${r.comentario}` : ""}` });
+      blocoBriefing.push(blocoArquivo(r.mime!, b64, r.titulo || "Referência", r.comentario || undefined));
+    }
+    blocoBriefing[blocoBriefing.length - 1].cache_control = { type: "ephemeral" };
+  }
+
+  // 3. Material enviado
   const material: Bloco[] = [{ type: "text", text: "MATERIAL ENVIADO PARA PRÉ-ANÁLISE" }];
   for (const f of a.arquivos) {
     const { b64, bytes } = await baixar(adm, f.caminho);
@@ -221,7 +299,7 @@ async function rodar(adm: SupabaseClient, a: Analise) {
     material.push(blocoArquivo(f.mime, b64, f.nome));
   }
 
-  // 3. Pedido
+  // 4. Pedido
   const pedido = [
     "Faça a pré-análise desta entrega.",
     `Título: ${a.titulo}`,
@@ -229,7 +307,8 @@ async function rodar(adm: SupabaseClient, a: Analise) {
     etapa && `Etapa: ${etapa}`,
     a.cidade && `Cidade: ${a.cidade}`,
     a.obs && `O arquiteto pede atenção a: ${a.obs}`,
-    `Analistas desta análise (avalie todos, na ordem): ${comConteudo.map((x) => `${x.nome} [${x.id}]`).join("; ")}.`,
+    temBriefing ? "Há briefing do projeto: preencha \"cliente\" no parecer, avaliando cada objetivo." : "Este projeto não tem briefing: deixe \"cliente\" de fora.",
+    comConteudo.length ? `Analistas desta análise (avalie todos, na ordem): ${comConteudo.map((x) => `${x.nome} [${x.id}]`).join("; ")}.` : "Nenhum analista do escritório com conteúdo: avalie só o cliente (camadas vazias).",
   ].filter(Boolean).join("\n");
 
   const resp = await fetch("https://api.anthropic.com/v1/messages", {
@@ -241,7 +320,7 @@ async function rodar(adm: SupabaseClient, a: Analise) {
       system: SISTEMA,
       tools: [FERRAMENTA],
       tool_choice: { type: "tool", name: "registrar_parecer" },
-      messages: [{ role: "user", content: [...conhecimento, ...material, { type: "text", text: pedido }] }],
+      messages: [{ role: "user", content: [...conhecimento, ...blocoBriefing, ...material, { type: "text", text: pedido }] }],
     }),
     signal: AbortSignal.timeout(285e3),
   });
@@ -256,7 +335,34 @@ async function rodar(adm: SupabaseClient, a: Analise) {
   if (j?.stop_reason === "max_tokens") throw new Error("O parecer ficou longo demais e foi cortado. Envie menos pranchas por vez.");
   const tool = (j?.content as { type: string; name?: string; input?: Parecer }[] | undefined)?.find((c) => c.type === "tool_use" && c.name === "registrar_parecer");
   if (!tool?.input) throw new Error("A IA não devolveu o parecer no formato esperado. Tente de novo.");
-  const parecer: Parecer = { ...tool.input, ignorados: ignorados.length ? ignorados : undefined };
+  const parecer: Parecer = { ...tool.input, camadas: tool.input.camadas ?? [], ignorados: ignorados.length ? ignorados : undefined };
+  if (!temBriefing) {
+    delete parecer.cliente;
+    if (a.projeto_id) parecer.sem_briefing = true;
+  }
+
+  // Nota de aderência ao cliente: média das notas ponderada pela prioridade
+  const prio = new Map(objetivos.map((o) => [o.id, o.prioridade]));
+  let sc = 0;
+  let pc = 0;
+  for (const o of parecer.cliente?.objetivos ?? []) {
+    if (o.status === "nao_avaliavel") continue;
+    const p = (o.objetivo_id && prio.get(o.objetivo_id)) || o.prioridade || "importante";
+    if (o.objetivo_id && prio.get(o.objetivo_id)) o.prioridade = prio.get(o.objetivo_id);
+    const w = PESO_PRIORIDADE[p] ?? 2;
+    sc += Math.max(0, Math.min(10, Number(o.nota) || 0)) * w;
+    pc += w;
+  }
+  const notaCliente = pc ? Math.round((sc / pc) * 10) / 10 : null;
+  const copia = temBriefing
+    ? {
+        versao: briefing?.versao ?? 1,
+        cliente: briefing?.cliente ?? {},
+        responsavel: briefing?.responsavel ?? {},
+        objetivos: objetivos.map((o) => ({ id: o.id, texto: o.texto, prioridade: o.prioridade })),
+        refs: refsB.map((r) => ({ tipo: r.tipo, origem: r.origem, titulo: r.titulo, comentario: r.comentario, link: r.link, caminho: r.caminho })),
+      }
+    : null;
 
   // Nota estética ponderada pelos pesos dos critérios
   const pesos = new Map(itens.map((i) => [i.id, Number(i.peso) || 1]));
@@ -274,7 +380,7 @@ async function rodar(adm: SupabaseClient, a: Analise) {
 
   const { error } = await adm
     .from("analises")
-    .update({ status: "concluida", resultado: parecer, nota, modelo: j?.model || MODELO, uso, erro: null, concluida_em: new Date().toISOString() })
+    .update({ status: "concluida", resultado: parecer, nota, nota_cliente: notaCliente, briefing: copia, modelo: j?.model || MODELO, uso, erro: null, concluida_em: new Date().toISOString() })
     .eq("id", a.id);
   if (error) throw new Error(error.message);
 }
