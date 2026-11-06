@@ -4,7 +4,7 @@ import type { Papel } from "./util";
 export type Nivel = "ver" | "editar";
 export type Permissoes = Partial<Record<Modulo, Nivel>>;
 
-export type Modulo = "equipe" | "comercial" | "projetos" | "planejamento" | "horas" | "financeiro" | "padroes" | "sensiveis";
+export type Modulo = "equipe" | "comercial" | "projetos" | "planejamento" | "horas" | "financeiro" | "padroes" | "analistas" | "sensiveis";
 
 export const MODULOS: { id: Exclude<Modulo, "sensiveis">; nome: string; desc: string; soEditar?: boolean }[] = [
   { id: "equipe", nome: "Equipe", desc: "Página das outras pessoas; editar = convidar, cadastro e documentos" },
@@ -14,6 +14,7 @@ export const MODULOS: { id: Exclude<Modulo, "sensiveis">; nome: string; desc: st
   { id: "horas", nome: "Horas", desc: "Horas lançadas por toda a equipe" },
   { id: "financeiro", nome: "Financeiro", desc: "Contas a pagar, receber, caixas e relatórios" },
   { id: "padroes", nome: "Padrões", desc: "Trilhas, aulas e manual. Todos já visualizam", soEditar: true },
+  { id: "analistas", nome: "Analistas IA", desc: "Ver = todas as pré-análises; editar = cadastrar analistas e dar a decisão final" },
 ];
 
 // Modelos para "Aplicar cargo…"

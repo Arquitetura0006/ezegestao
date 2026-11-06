@@ -26,7 +26,7 @@ export async function middleware(req: NextRequest) {
   } = await supabase.auth.getUser();
 
   const p = req.nextUrl.pathname;
-  const publica = p === "/" || ["/recepcao", "/privacidade", "/termos", "/auth"].some((x) => p === x || p.startsWith(x + "/"));
+  const publica = p === "/" || ["/recepcao", "/privacidade", "/termos", "/auth", "/briefing"].some((x) => p === x || p.startsWith(x + "/"));
   const interna = !publica;
   if (interna && !user) {
     const url = req.nextUrl.clone();
@@ -37,5 +37,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:webp|png|jpg|svg)$).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:webp|png|jpg|svg|mjs|wasm)$).*)"],
 };
