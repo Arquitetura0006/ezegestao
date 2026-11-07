@@ -454,10 +454,16 @@ export default function ProjetoPg({ params }: { params: { id: string } }) {
         </form>
       )}
 
-      <div className="tabs" role="tablist" style={{ margin: "8px 0 20px" }}>
-        {([["eap", "Etapas e tarefas"], ["cronograma", "Cronograma"], ["horas", "Horas"], ["equipe", "Equipe e recados"]] as [Aba, string][]).map(([k, t]) => (
-          <button key={k} type="button" role="tab" aria-selected={aba === k} className={aba === k ? "on" : ""} onClick={() => setAba(k)}>{t}</button>
-        ))}
+      <div className="row" style={{ margin: "8px 0 20px", justifyContent: "space-between" }}>
+        <div className="tabs" role="tablist">
+          {([["eap", "Etapas e tarefas"], ["cronograma", "Cronograma"], ["horas", "Horas"], ["equipe", "Equipe e recados"]] as [Aba, string][]).map(([k, t]) => (
+            <button key={k} type="button" role="tab" aria-selected={aba === k} className={aba === k ? "on" : ""} onClick={() => setAba(k)}>{t}</button>
+          ))}
+        </div>
+        <div className="row" style={{ gap: 6 }}>
+          <Link href={`/c/${params.id}/organograma`} className="btn small">Organograma</Link>
+          <Link href={`/c/${params.id}`} className="btn small dark">Coordenação 3D</Link>
+        </div>
       </div>
 
       {erro && <p className="err" role="alert" style={{ marginBottom: 12 }}>{erro}</p>}
