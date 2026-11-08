@@ -26,6 +26,7 @@ export const I = {
   financeiro: <path d="M3 6h18v12H3zM3 10h18M7 15h3" />,
   cadastros: <path d="M4 6c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3zM4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3" />,
   modelo: <path d="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6" />,
+  analise: <path d="M9 4h6M10 4v5L5 18a2 2 0 0 0 1.7 3h10.6a2 2 0 0 0 1.7-3l-5-9V4M7.5 14h9" />,
   coord: <path d="M12 3l8 4.5v9L12 21l-8-4.5v-9zM12 12l8-4.5M12 12v9M12 12L4 7.5" />,
 };
 
@@ -82,10 +83,11 @@ export default function Shell({ ctx, children }: { ctx: Ctx; children: React.Rea
     { href: "/horas", t: "Horas", ic: I.horas },
     ...(pode("financeiro") ? [{ href: "/financeiro", t: "Financeiro", ic: I.financeiro }] : []),
     { href: "/padroes", t: "Padrões", ic: I.padroes },
+    { href: "/analises", t: "Pré-análise IA", ic: I.analise },
     ...(ctx.admin ? [{ href: "/cadastros", t: "Cadastros", ic: I.cadastros }, { href: "/config", t: "Configurações", ic: I.config }] : []),
   ];
   const celular = ["/inicio", "/sala", "/projetos", "/tarefas", "/equipe"].map((h) => itens.find((i) => i.href === h)!);
-  const on = (h: string) => path === h || path.startsWith(h + "/");
+  const on = (h: string) => path === h || path.startsWith(h + "/") || (h === "/analises" && path.startsWith("/analistas"));
 
   return (
     <Contexto.Provider value={ctx}>

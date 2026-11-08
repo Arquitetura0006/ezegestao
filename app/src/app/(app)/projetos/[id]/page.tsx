@@ -461,6 +461,8 @@ export default function ProjetoPg({ params }: { params: { id: string } }) {
           ))}
         </div>
         <div className="row" style={{ gap: 6 }}>
+          <Link href={`/projetos/${params.id}/briefing`} className="btn small">Briefing</Link>
+          <Link href={`/analises/nova?projeto=${params.id}`} className="btn small">Pré-análise IA</Link>
           <Link href={`/c/${params.id}/organograma`} className="btn small">Organograma</Link>
           <Link href={`/c/${params.id}`} className="btn small dark">Coordenação 3D</Link>
         </div>
