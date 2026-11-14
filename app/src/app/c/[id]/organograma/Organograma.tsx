@@ -463,7 +463,7 @@ function Editor({ projeto }: { projeto: ProjetoCoord }) {
                           <datalist id="og-disc">{["Arquitetura", "Estrutura", "Elétrico", "Hidrossanitário", "Incêndio", "Climatização", "Fundações"].map((d) => <option key={d} value={d} />)}</datalist>
                         </label>
                       )}
-                      {selNo.data.papel === "coordenacao" && <p className="note" style={{ margin: 0 }}>A pessoa da equipe ligada a este card vira a coordenadora do projeto (cria e valida apontamentos).</p>}
+                      {selNo.data.papel === "coordenacao" && <p className="note" style={{ margin: 0 }}>A pessoa da equipe ligada a este card vira a coordenadora do projeto (valida os apontamentos).</p>}
                       {selNo.data.papel === "disciplina" && <p className="note" style={{ margin: 0 }}>As pessoas ligadas a este card são sugeridas como responsáveis nos apontamentos desta disciplina.</p>}
                     </>
                   )}

@@ -44,6 +44,7 @@ async function baixarFrag(supabase: ReturnType<typeof supabaseNavegador>, caminh
 export default function Coordenacao({ projeto, eu }: { projeto: ProjetoCoord; eu: Eu }) {
   const supabase = useMemo(() => supabaseNavegador(), []);
   const coordena = projeto.coordena;
+  const podeApontar = coordena || projeto.equipe; // equipe interna cria; validar segue com o coordenador
   const tela = useRef<HTMLDivElement>(null);
   const visor = useRef<Visor | null>(null);
   const [pronto, setPronto] = useState(false);
@@ -355,7 +356,7 @@ export default function Coordenacao({ projeto, eu }: { projeto: ProjetoCoord; eu
               {lista.length === 0 ? (
                 <div className="vazio" style={{ padding: 22 }}>
                   <p className="vazio-t">Nenhum apontamento aqui.</p>
-                  {coordena && !semModelo && <p className="note" style={{ margin: "4px 0 0" }}>Use “Apontar” no 3D e clique no elemento.</p>}
+                  {podeApontar && !semModelo && <p className="note" style={{ margin: "4px 0 0" }}>Use “Apontar” no 3D e clique no elemento.</p>}
                 </div>
               ) : (
                 <div className="lista">
@@ -433,7 +434,7 @@ export default function Coordenacao({ projeto, eu }: { projeto: ProjetoCoord; eu
             <button type="button" className={`cd-tg${corte ? " on" : ""}`} onClick={() => { const n = !corte; setCorte(n); if (visor.current) visor.current.corte = n; }} title="Ligue e clique numa face para cortar">Corte</button>
             {corte && <button type="button" className="cd-tg" onClick={() => visor.current?.limparCortes()}>Limpar cortes</button>}
             <button type="button" className="cd-tg" onClick={() => visor.current?.enquadrar()}>Enquadrar</button>
-            {coordena && (
+            {podeApontar && (
               <>
                 <span className="cd-sep" />
                 <button type="button" className={`cd-tg forte${apontando ? " on" : ""}`} disabled={semModelo} onClick={() => { setApontando(!apontando); setCorte(false); if (visor.current) visor.current.corte = false; }}>
@@ -449,7 +450,7 @@ export default function Coordenacao({ projeto, eu }: { projeto: ProjetoCoord; eu
               <strong>{sel.nome || "Elemento"}</strong>
               <small>{[nomeModelo(sel.modelo), sel.categoria].filter(Boolean).join(" · ")}</small>
               {sel.guid && <small className="note">GUID {sel.guid}</small>}
-              {coordena && <button type="button" className="btn small dark" onClick={() => abrirRascunho(sel)}>Apontar neste elemento</button>}
+              {podeApontar && <button type="button" className="btn small dark" onClick={() => abrirRascunho(sel)}>Apontar neste elemento</button>}
             </div>
           )}
 
