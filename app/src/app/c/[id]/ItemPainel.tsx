@@ -19,6 +19,9 @@ export default function ItemPainel({
 }) {
   const supabase = useMemo(() => supabaseNavegador(), []);
   const coordena = projeto.coordena;
+  // Autor da equipe interna edita o próprio apontamento até ser validado
+  const souAutor = projeto.equipe && item.criado_por === eu.id && item.status !== "validado";
+  const podeEditar = coordena || souAutor;
   const [msgs, setMsgs] = useState<Mensagem[]>([]);
   const [texto, setTexto] = useState("");
   const [decisao, setDecisao] = useState(false);
@@ -179,6 +182,8 @@ export default function ItemPainel({
 
   const podeStatus: StatusItem[] = coordena
     ? (["aberto", "em_correcao", "respondido", "validado"] as StatusItem[])
+    : souAutor
+      ? (["aberto", "em_correcao", "respondido"] as StatusItem[])
     : souResp && item.status !== "validado"
       ? (["em_correcao", "respondido"] as StatusItem[])
       : [];
@@ -254,7 +259,7 @@ export default function ItemPainel({
                 {resp.length === 0 ? <span className="note">Ninguém</span> : resp.map((p) => (
                   <span key={chavePessoa(p)} className="row" style={{ gap: 6, flexWrap: "nowrap" }}>
                     {p.nome}{p.grupo !== "equipe" && p.empresa ? <span className="note"> · {p.empresa}</span> : null}
-                    {coordena && projeto.equipe && p.grupo === "equipe" && p.perfil_id && p.perfil_id !== eu.id && (
+                    {podeEditar && projeto.equipe && p.grupo === "equipe" && p.perfil_id && p.perfil_id !== eu.id && (
                       <button type="button" className="linkbtn" style={{ fontSize: 13 }} onClick={() => chamar(p)}>Chamar</button>
                     )}
                   </span>
@@ -276,7 +281,7 @@ export default function ItemPainel({
             )}
             <div className="row" style={{ marginTop: 8 }}>
               {item.camera && <button type="button" className="btn small" onClick={irPara}>Ver no 3D</button>}
-              {coordena && <button type="button" className="btn small ghost" onClick={editar}>Editar</button>}
+              {podeEditar && <button type="button" className="btn small ghost" onClick={editar}>Editar</button>}
             </div>
           </>
         )}
