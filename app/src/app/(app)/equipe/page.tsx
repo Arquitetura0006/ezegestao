@@ -56,7 +56,7 @@ export default function Equipe() {
   }, [carregar]);
 
   const textoConvite = (p: Papel) =>
-    `Olá! Você foi convidado(a) para o escritório virtual da ${esc.nome} como ${PAPEL[p]}.\n\nEntre em ${SITE} usando este e-mail: clique em "Entrar com Google" (se for uma conta Google) ou peça o link de acesso por e-mail.`;
+    `Olá! Você foi convidado(a) para o escritório virtual da ${esc.nome} como ${PAPEL[p]}.\n\nEntre em ${SITE} usando este e-mail: peça o acesso por e-mail e entre pelo link ou pelo código que chegar.`;
 
   async function convidar(e: React.FormEvent) {
     e.preventDefault();
