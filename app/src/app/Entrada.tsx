@@ -29,6 +29,8 @@ export default function Entrada({ capa, escritorio }: { capa: Capa; escritorio: 
   const [hora, setHora] = useState("");
   const [aba, setAba] = useState<"equipe" | "cliente">("equipe");
   const [email, setEmail] = useState("");
+  const [enviadoPara, setEnviadoPara] = useState("");
+  const [codigo, setCodigo] = useState("");
   const [nome, setNome] = useState("");
   const [assunto, setAssunto] = useState("");
   const [msg, setMsg] = useState<{ tipo: "err" | "ok"; texto: string } | null>(null);
@@ -58,30 +60,52 @@ export default function Entrada({ capa, escritorio }: { capa: Capa; escritorio: 
     setCarregadas((c) => (c.includes(idx) ? c : [...c, idx]));
   }, [idx]);
 
-  async function entrarGoogle() {
-    setMsg(null);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
-    });
-    if (error) setMsg({ tipo: "err", texto: "O login com Google ainda não está ativo. Use o link por e-mail." });
-  }
-
   async function entrarEmail(e: React.FormEvent) {
     e.preventDefault();
     setMsg(null);
-    if (!/^\S+@\S+\.\S+$/.test(email.trim())) {
+    const em = email.trim().toLowerCase();
+    if (!/^\S+@\S+\.\S+$/.test(em)) {
       setMsg({ tipo: "err", texto: "Informe um e-mail válido." });
       return;
     }
     setEnviando(true);
     const { error } = await supabase.auth.signInWithOtp({
-      email: email.trim(),
+      email: em,
       options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
     });
     setEnviando(false);
-    if (error) setMsg({ tipo: "err", texto: "Não foi possível enviar o link agora. Tente de novo em alguns minutos." });
-    else setMsg({ tipo: "ok", texto: `Enviamos um link de acesso para ${email.trim()}. Abra o e-mail neste aparelho.` });
+    if (error) {
+      setMsg({ tipo: "err", texto: "Não foi possível enviar o e-mail agora. Tente de novo em alguns minutos." });
+      return;
+    }
+    setEnviadoPara(em);
+    setCodigo("");
+    setMsg({ tipo: "ok", texto: `Enviamos um e-mail para ${em}. Clique no link ou digite aqui o código que veio nele.` });
+  }
+
+  async function entrarCodigo(e: React.FormEvent) {
+    e.preventDefault();
+    setMsg(null);
+    const token = codigo.replace(/\D/g, "");
+    if (token.length < 6) {
+      setMsg({ tipo: "err", texto: "Digite o código completo que chegou no e-mail." });
+      return;
+    }
+    setEnviando(true);
+    const { error } = await supabase.auth.verifyOtp({ email: enviadoPara, token, type: "email" });
+    setEnviando(false);
+    if (error) {
+      setMsg({ tipo: "err", texto: "Código inválido ou vencido. Confira o último e-mail ou peça um novo." });
+      return;
+    }
+    // Recarrega por inteiro para o servidor já ler a sessão nova.
+    window.location.assign("/inicio");
+  }
+
+  function trocarEmail() {
+    setEnviadoPara("");
+    setCodigo("");
+    setMsg(null);
   }
 
   async function visitar(e: React.FormEvent) {
@@ -163,16 +187,35 @@ export default function Entrada({ capa, escritorio }: { capa: Capa; escritorio: 
 
         {aba === "equipe" ? (
           <div className="form">
-            <button type="button" className="btn full" onClick={entrarGoogle}>Entrar com Google</button>
-            <div className="sep">ou receba um link por e-mail</div>
-            <form className="form" onSubmit={entrarEmail} noValidate>
-              <div>
-                <label className="l" htmlFor="email">E-mail</label>
-                <input id="email" type="email" autoComplete="email" placeholder="voce@exemplo.com" value={email} onChange={(e) => setEmail(e.target.value)} />
-              </div>
-              <button className="btn dark full" type="submit" disabled={enviando}>{enviando ? "Enviando…" : "Enviar link de acesso"}</button>
-            </form>
-            <p className="note" style={{ margin: 0 }}>Sem senha: você entra pelo link que chega no seu e-mail.</p>
+            {!enviadoPara ? (
+              <form className="form" onSubmit={entrarEmail} noValidate>
+                <div>
+                  <label className="l" htmlFor="email">E-mail</label>
+                  <input id="email" type="email" autoComplete="email" placeholder="voce@exemplo.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+                </div>
+                <button className="btn dark full" type="submit" disabled={enviando}>{enviando ? "Enviando…" : "Receber acesso por e-mail"}</button>
+              </form>
+            ) : (
+              <form className="form" onSubmit={entrarCodigo} noValidate>
+                <div>
+                  <label className="l" htmlFor="codigo">Código do e-mail</label>
+                  <input
+                    id="codigo"
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    maxLength={10}
+                    placeholder="000000"
+                    value={codigo}
+                    onChange={(e) => setCodigo(e.target.value.replace(/\D/g, ""))}
+                    autoFocus
+                  />
+                </div>
+                <button className="btn dark full" type="submit" disabled={enviando}>{enviando ? "Entrando…" : "Entrar"}</button>
+                <button type="button" className="btn full" onClick={trocarEmail} disabled={enviando}>Usar outro e-mail ou pedir de novo</button>
+              </form>
+            )}
+            <p className="note" style={{ margin: 0 }}>Sem senha: entre pelo link ou pelo código que chega no seu e-mail. Neste aparelho você fica conectado.</p>
           </div>
         ) : (
           <form className="form" onSubmit={visitar} noValidate>

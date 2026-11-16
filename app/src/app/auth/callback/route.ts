@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseServidor } from "@/lib/supabase/server";
 
-// Recebe o retorno do link por e-mail ou do Google e cria a sessão.
+// Recebe o retorno do link por e-mail e cria a sessão.
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const code = url.searchParams.get("code");
